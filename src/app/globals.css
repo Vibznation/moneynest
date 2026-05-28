@@ -1,26 +1,122 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #faf7f1;
+  --surface: #ffffff;
+  --surface-muted: #f1ede4;
+  --foreground: #0f1c33;
+  --foreground-muted: #5b6478;
+  --border: #ebe6da;
+  --border-strong: #ddd6c5;
+  --primary: #0f2a4d;
+  --accent: #4fae8a;
+  --accent-strong: #2f8f6a;
+  --accent-soft: #e6f3ec;
+  --warning: #d9a441;
+  --warning-soft: #fbf1dc;
+  --danger: #c45a5a;
+  --danger-soft: #f8e3e0;
+  --info: #6699c8;
+  --info-soft: #e4eef7;
+  --shadow-soft: 0 1px 2px rgba(15, 28, 51, 0.04),
+    0 4px 16px -8px rgba(15, 28, 51, 0.06);
+}
+
+.dark {
+  --background: #0a1322;
+  --surface: #131e34;
+  --surface-muted: #1b2845;
+  --foreground: #ecf0f7;
+  --foreground-muted: #94a0b6;
+  --border: #1f2e4d;
+  --border-strong: #2a3b60;
+  --primary: #d2dcee;
+  --accent: #6fc9a3;
+  --accent-strong: #8bd9b8;
+  --accent-soft: #15301f;
+  --warning: #e4b86a;
+  --warning-soft: #3a2d12;
+  --danger: #db7a7a;
+  --danger-soft: #3a1c1c;
+  --info: #8fb6dd;
+  --info-soft: #14263c;
+  --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.35),
+    0 4px 24px -8px rgba(0, 0, 0, 0.45);
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
   --color-foreground: var(--foreground);
+  --color-foreground-muted: var(--foreground-muted);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-primary: var(--primary);
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-accent-soft: var(--accent-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
   --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+html,
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  background-image:
+    radial-gradient(1200px 600px at 80% -10%, color-mix(in oklab, var(--accent) 10%, transparent), transparent 60%),
+    radial-gradient(900px 500px at -10% 110%, color-mix(in oklab, var(--info) 10%, transparent), transparent 60%);
+  background-attachment: fixed;
+}
+
+* {
+  border-color: var(--border);
+}
+
+input,
+select,
+textarea {
+  background: var(--surface);
+  color: var(--foreground);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--foreground-muted);
+  opacity: 0.7;
+}
+
+/* Tabular numbers for prices */
+.tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* Subtle pop on tap (mobile) */
+.tap {
+  transition:
+    transform 120ms ease,
+    background-color 120ms ease;
+}
+.tap:active {
+  transform: scale(0.98);
+}
+
+/* Respect iOS safe areas */
+.pb-safe {
+  padding-bottom: max(env(safe-area-inset-bottom), 0px);
 }
