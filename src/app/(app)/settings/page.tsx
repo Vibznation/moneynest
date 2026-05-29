@@ -12,13 +12,22 @@ import type { IncomeFrequency } from "@/types/domain";
 
 export default function SettingsPage() {
   const router = useRouter();
-  const { snapshot, updateSettings, updateProfile, updateAccount, reset } =
+  const { snapshot, updateSettings, updateProfile, updateAccount, addIncome, updateIncome, reset } =
     useData();
   const { theme, setTheme } = useTheme();
 
   const settings = snapshot.settings!;
   const profile = snapshot.profile!;
   const account = snapshot.account!;
+  const incomeList = snapshot.income || [];
+
+  // State for new income
+  const [newIncome, setNewIncome] = useState({
+    name: "",
+    amount: "",
+    frequency: "monthly" as IncomeFrequency,
+    next_payday: "",
+  });
 
   const [name, setName] = useState(profile.name ?? "");
   const [email, setEmail] = useState(profile.email ?? "");
@@ -30,6 +39,83 @@ export default function SettingsPage() {
 
   return (
     <div className="flex flex-col gap-6">
+      <Card>
+        <CardTitle>Income</CardTitle>
+        <div className="mt-3 grid gap-3">
+          {incomeList.length === 0 && <p className="text-sm text-foreground-muted">No income sources yet.</p>}
+          {incomeList.map((inc) => (
+            <div key={inc.id} className="flex flex-col sm:flex-row sm:items-end gap-2 border-b pb-3 mb-3">
+              <Field label="Name" className="flex-1">
+                <Input
+                  value={inc.name}
+                  onChange={e => updateIncome(inc.id, { name: e.target.value })}
+                />
+              </Field>
+              <Field label="Amount" className="w-32">
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={inc.amount}
+                  onChange={e => updateIncome(inc.id, { amount: parseFloat(e.target.value) })}
+                />
+              </Field>
+              <Field label="Frequency" className="w-32">
+                <Select
+                  value={inc.frequency}
+                  onChange={e => updateIncome(inc.id, { frequency: e.target.value as IncomeFrequency })}
+                >
+                  <option value="monthly">Monthly</option>
+                  <option value="biweekly">Biweekly</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="custom">Custom</option>
+                </Select>
+              </Field>
+            </div>
+          ))}
+        </div>
+        <div className="mt-4 grid gap-3 sm:grid-cols-4">
+          <Field label="Name">
+            <Input
+              value={newIncome.name}
+              onChange={e => setNewIncome(i => ({ ...i, name: e.target.value }))}
+            />
+          </Field>
+          <Field label="Amount">
+            <Input
+              type="number"
+              step="0.01"
+              value={newIncome.amount}
+              onChange={e => setNewIncome(i => ({ ...i, amount: e.target.value }))}
+            />
+          </Field>
+          <Field label="Frequency">
+            <Select
+              value={newIncome.frequency}
+              onChange={e => setNewIncome(i => ({ ...i, frequency: e.target.value as IncomeFrequency }))}
+            >
+              <option value="monthly">Monthly</option>
+              <option value="biweekly">Biweekly</option>
+              <option value="weekly">Weekly</option>
+              <option value="custom">Custom</option>
+            </Select>
+          </Field>
+          <Button
+            className="self-end"
+            onClick={() => {
+              if (!newIncome.name || !newIncome.amount) return;
+              addIncome({
+                name: newIncome.name,
+                amount: parseFloat(newIncome.amount),
+                frequency: newIncome.frequency,
+                next_payday: new Date().toISOString(),
+              });
+              setNewIncome({ name: "", amount: "", frequency: "monthly", next_payday: "" });
+            }}
+          >
+            Add income
+          </Button>
+        </div>
+      </Card>
       <header>
         <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
         <p className="text-sm text-foreground-muted">

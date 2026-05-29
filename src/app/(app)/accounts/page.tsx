@@ -196,9 +196,12 @@ export default function AccountsPage() {
           setOpen(false);
         }}
       />
+
+
     </div>
   );
 }
+
 
 function SummaryTile({
   label,
@@ -339,12 +342,6 @@ function AccountRow({
         </div>
       </div>
       <div className="mt-2">
-        <div className="flex items-center justify-between mb-1">
-          <CardTitle>Transactions</CardTitle>
-          <Button size="sm" variant="secondary" onClick={() => { setEditingTx(null); setTxOpen(true); }}>
-            <Plus size={14} /> Add
-          </Button>
-        </div>
         <TransactionList
           transactions={txs}
           currency={currency}
@@ -355,7 +352,7 @@ function AccountRow({
         <TransactionModal
           open={txOpen}
           onClose={() => setTxOpen(false)}
-          initial={editingTx ? { ...editingTx, financial_account_id: account.id } : { financial_account_id: account.id } as Partial<Transaction>}
+          initial={editingTx ? { ...editingTx, financial_account_id: account.id } : null}
           currency={currency}
           onSubmit={(data) => {
             if (editingTx) {
