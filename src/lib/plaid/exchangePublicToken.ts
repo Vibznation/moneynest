@@ -1,17 +1,14 @@
+import { getPlaidClient } from "./client";
+
 /**
- * Plaid: exchangePublicToken (server only).
- *
- * Future implementation:
- *   - Receive public_token from the client after Plaid Link succeeds.
- *   - Call plaid.itemPublicTokenExchange({ public_token }).
- *   - Encrypt the resulting access_token and persist to plaid_items.
- *   - Return only safe metadata (institution_name, item_id) to the client.
- *
- * SECURITY: the access_token must never reach the browser.
+ * Exchange a Plaid public_token for an access_token.
+ * SECURITY: the access_token must NEVER be returned to the browser.
+ * Store it server-side (e.g., encrypted in Supabase `plaid_items`).
  */
-export async function exchangePublicToken(/*
-  userId: string,
+export async function exchangePublicToken(
   publicToken: string,
-*/): Promise<{ item_id: string; institution_name: string | null }> {
-  throw new Error("Plaid integration is not configured yet.");
+): Promise<{ item_id: string; access_token: string }> {
+  const client = getPlaidClient();
+  const res = await client.itemPublicTokenExchange({ public_token: publicToken });
+  return { item_id: res.data.item_id, access_token: res.data.access_token };
 }

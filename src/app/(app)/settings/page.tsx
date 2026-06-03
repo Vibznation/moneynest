@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useData } from "@/lib/data-store";
 import { Card, CardTitle } from "@/components/ui/Card";
@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Field, Input, Select } from "@/components/ui/Input";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { FREQUENCIES } from "@/lib/constants";
+import { isSupabaseConfigured, getSupabaseBrowser } from "@/lib/supabase/client";
 import type { IncomeFrequency } from "@/types/domain";
 
 export default function SettingsPage() {
@@ -37,39 +38,80 @@ export default function SettingsPage() {
   const [checking, setChecking] = useState(account.checking_balance.toString());
   const [savings, setSavings] = useState(account.savings_balance.toString());
 
+  // Notifications
+  const [notifPermission, setNotifPermission] = useState<NotificationPermission | "unsupported">("default");
+  useEffect(() => {
+    if (typeof window !== "undefined" && "Notification" in window) {
+      setNotifPermission(Notification.permission);
+    } else {
+      setNotifPermission("unsupported");
+    }
+  }, []);
+  async function requestNotifications() {
+    if (!("Notification" in window)) return;
+    const perm = await Notification.requestPermission();
+    setNotifPermission(perm);
+    if (perm === "granted") {
+      new Notification("MoneyNest reminders enabled", {
+        body: "You'll be notified about upcoming bills and renewals.",
+        icon: "/icon.svg",
+      });
+    }
+  }
+
+  // Sign out (Supabase)
+  async function handleSignOut() {
+    if (isSupabaseConfigured()) {
+      const supabase = getSupabaseBrowser();
+      await supabase.auth.signOut();
+    }
+    router.push("/auth");
+  }
+
   return (
     <div className="flex flex-col gap-6">
+      <header>
+        <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
+        <p className="text-sm text-foreground-muted">Make MoneyNest feel like yours.</p>
+      </header>
+
       <Card>
         <CardTitle>Income</CardTitle>
         <div className="mt-3 grid gap-3">
           {incomeList.length === 0 && <p className="text-sm text-foreground-muted">No income sources yet.</p>}
           {incomeList.map((inc) => (
             <div key={inc.id} className="flex flex-col sm:flex-row sm:items-end gap-2 border-b pb-3 mb-3">
-              <Field label="Name" className="flex-1">
-                <Input
-                  value={inc.name}
-                  onChange={e => updateIncome(inc.id, { name: e.target.value })}
-                />
-              </Field>
-              <Field label="Amount" className="w-32">
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={inc.amount}
-                  onChange={e => updateIncome(inc.id, { amount: parseFloat(e.target.value) })}
-                />
-              </Field>
-              <Field label="Frequency" className="w-32">
-                <Select
-                  value={inc.frequency}
-                  onChange={e => updateIncome(inc.id, { frequency: e.target.value as IncomeFrequency })}
-                >
-                  <option value="monthly">Monthly</option>
-                  <option value="biweekly">Biweekly</option>
-                  <option value="weekly">Weekly</option>
-                  <option value="custom">Custom</option>
-                </Select>
-              </Field>
+              <div className="flex-1">
+                <Field label="Name">
+                  <Input
+                    value={inc.name}
+                    onChange={e => updateIncome(inc.id, { name: e.target.value })}
+                  />
+                </Field>
+              </div>
+              <div className="w-32">
+                <Field label="Amount">
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={inc.amount}
+                    onChange={e => updateIncome(inc.id, { amount: parseFloat(e.target.value) })}
+                  />
+                </Field>
+              </div>
+              <div className="w-32">
+                <Field label="Frequency">
+                  <Select
+                    value={inc.frequency}
+                    onChange={e => updateIncome(inc.id, { frequency: e.target.value as IncomeFrequency })}
+                  >
+                    <option value="monthly">Monthly</option>
+                    <option value="biweekly">Biweekly</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="custom">Custom</option>
+                  </Select>
+                </Field>
+              </div>
             </div>
           ))}
         </div>
@@ -116,12 +158,6 @@ export default function SettingsPage() {
           </Button>
         </div>
       </Card>
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
-        <p className="text-sm text-foreground-muted">
-          Make MoneyNest feel like yours.
-        </p>
-      </header>
 
       <Card>
         <CardTitle>Profile</CardTitle>
@@ -246,10 +282,29 @@ export default function SettingsPage() {
 
       <Card>
         <CardTitle>Notifications</CardTitle>
-        <p className="mt-2 text-sm text-foreground-muted">
-          Email and push reminders are coming soon.
-        </p>
+        {notifPermission === "unsupported" ? (
+          <p className="mt-2 text-sm text-foreground-muted">Browser notifications are not supported.</p>
+        ) : notifPermission === "granted" ? (
+          <p className="mt-2 text-sm text-accent">Notifications enabled. You&apos;ll be reminded about upcoming bills and renewals.</p>
+        ) : notifPermission === "denied" ? (
+          <p className="mt-2 text-sm text-danger">Notifications blocked. Enable them in your browser settings.</p>
+        ) : (
+          <div className="mt-3 flex items-center justify-between">
+            <p className="text-sm text-foreground-muted">Get reminders for upcoming bills and subscription renewals.</p>
+            <Button variant="secondary" onClick={requestNotifications}>Enable</Button>
+          </div>
+        )}
       </Card>
+
+      {isSupabaseConfigured() && (
+        <Card>
+          <CardTitle>Account</CardTitle>
+          <div className="mt-3 flex items-center justify-between">
+            <p className="text-sm text-foreground-muted">Signed in as {profile.email || profile.name || "user"}.</p>
+            <Button variant="danger" onClick={handleSignOut}>Sign out</Button>
+          </div>
+        </Card>
+      )}
 
       <Card>
         <CardTitle>Data</CardTitle>

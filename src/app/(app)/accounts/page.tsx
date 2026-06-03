@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
 import {
   Plus,
@@ -16,6 +16,7 @@ import {
   Banknote,
   Building2,
 } from "lucide-react";
+import { usePlaidLink } from "react-plaid-link";
 import { useData } from "@/lib/data-store";
 import { Card, CardTitle, CardValue } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -51,6 +52,39 @@ export default function AccountsPage() {
 
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<FinancialAccount | null>(null);
+  const [plaidToken, setPlaidToken] = useState<string | null>(null);
+  const [plaidStatus, setPlaidStatus] = useState<"idle" | "loading" | "error">("idle");
+
+  async function fetchPlaidToken() {
+    setPlaidStatus("loading");
+    try {
+      const res = await fetch("/api/plaid/create-link-token", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId: "local" }) });
+      const data = await res.json() as { link_token?: string; error?: string };
+      if (data.error) throw new Error(data.error);
+      setPlaidToken(data.link_token ?? null);
+    } catch {
+      setPlaidStatus("error");
+    }
+  }
+
+  const { open: openPlaid, ready: plaidReady } = usePlaidLink({
+    token: plaidToken ?? "",
+    onSuccess: useCallback(async (public_token: string) => {
+      try {
+        await fetch("/api/plaid/exchange-token", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ public_token }) });
+        setPlaidStatus("idle");
+        setPlaidToken(null);
+      } catch { /* ignore */ }
+    }, []),
+    onExit: useCallback(() => { setPlaidToken(null); setPlaidStatus("idle"); }, []),
+  });
+
+  useEffect(() => {
+    if (plaidToken && plaidReady) {
+      openPlaid();
+      setPlaidStatus("idle");
+    }
+  }, [plaidToken, plaidReady, openPlaid]);
 
   function openNew() {
     setEditing(null);
@@ -116,21 +150,24 @@ export default function AccountsPage() {
           <div className="min-w-0">
             <p className="text-sm font-semibold">Connect your bank securely</p>
             <p className="mt-0.5 text-xs text-foreground-muted">
-              Automatically sync balances and transactions.
+              Automatically sync balances and transactions via Plaid.
             </p>
           </div>
           <Button
             variant="secondary"
-            onClick={() =>
-              alert(
-                "Bank connection is coming soon. You can add accounts manually for now.",
-              )
-            }
+            disabled={plaidStatus === "loading"}
+            onClick={fetchPlaidToken}
           >
-            <Landmark size={16} /> Connect
+            <Landmark size={16} /> {plaidStatus === "loading" ? "Connecting…" : plaidStatus === "error" ? "Retry" : "Connect"}
           </Button>
         </Card>
       </div>
+
+      {plaidStatus === "error" && (
+        <p className="text-xs text-danger">
+          Could not connect to Plaid. Make sure PLAID_CLIENT_ID, PLAID_SECRET, and PLAID_ENV are set in .env.local.
+        </p>
+      )}
 
       {/* Privacy note */}
       <p className="flex items-start gap-2 text-xs text-foreground-muted">
