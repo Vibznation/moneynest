@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getSupabaseBrowser, isSupabaseConfigured } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/Button";
@@ -113,6 +114,16 @@ export default function AuthPage() {
           <Button variant="primary" type="submit" disabled={loading}>
             {loading ? "Loading…" : tab === "signin" ? "Sign in" : "Create account"}
           </Button>
+
+          {tab === "signup" && (
+            <p className="text-xs text-foreground-muted text-center leading-relaxed">
+              By creating an account you agree to our{" "}
+              <Link href="/privacy" className="text-accent underline underline-offset-2 hover:opacity-80 transition-opacity">
+                Privacy Policy
+              </Link>
+              .
+            </p>
+          )}
         </form>
       </div>
     </div>

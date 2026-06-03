@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useData } from "@/lib/data-store";
 import { Card, CardTitle } from "@/components/ui/Card";
@@ -333,6 +334,23 @@ export default function SettingsPage() {
           >
             Reset & delete data
           </Button>
+        </div>
+      </Card>
+
+      <Card>
+        <CardTitle>Privacy &amp; Legal</CardTitle>
+        <div className="mt-3 space-y-2">
+          <p className="text-sm text-foreground-muted leading-relaxed">
+            MoneyNest uses <strong className="text-foreground">Supabase</strong> for authentication
+            and cloud storage, and <strong className="text-foreground">Plaid</strong> for optional
+            bank account linking (read-only). We do not sell your data or run advertising.
+          </p>
+          <Link
+            href="/privacy"
+            className="inline-block text-sm text-accent underline underline-offset-2 hover:opacity-80 transition-opacity"
+          >
+            Read our full Privacy Policy →
+          </Link>
         </div>
       </Card>
     </div>

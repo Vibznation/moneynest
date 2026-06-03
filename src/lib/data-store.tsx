@@ -76,6 +76,7 @@ interface DataStore {
   ) => void;
   updateTransaction: (id: string, patch: Partial<import("@/types/domain").Transaction>) => void;
   deleteTransaction: (id: string) => void;
+  reloadFinancialAccounts: () => Promise<void>;
 }
 
 const Ctx = createContext<DataStore | null>(null);
@@ -103,35 +104,58 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(demo));
           localStorage.setItem(MODE_KEY, "demo");
         }
-        // Supabase sync: fetch accounts, transactions, income, bills, subscriptions, goals
-        if (isSupabaseConfigured() && snap.profile?.id) {
+        // Sync from Supabase using the real authenticated session
+        if (isSupabaseConfigured()) {
           try {
             const supabase = getSupabaseBrowser();
-            const uid = snap.profile.id;
-            const [
-              { data: accounts, error: accErr },
-              { data: txs, error: txErr },
-              { data: income, error: incomeErr },
-              { data: bills, error: billsErr },
-              { data: subs, error: subsErr },
-              { data: goals, error: goalsErr },
-            ] = await Promise.all([
-              supabase.from("financial_accounts").select("*").eq("user_id", uid).order("created_at", { ascending: true }),
-              supabase.from("transactions").select("*").eq("user_id", uid).order("transaction_date", { ascending: true }),
-              supabase.from("income").select("*").eq("user_id", uid).order("created_at", { ascending: true }),
-              supabase.from("bills").select("*").eq("user_id", uid).order("due_date", { ascending: true }),
-              supabase.from("subscriptions").select("*").eq("user_id", uid).order("renewal_date", { ascending: true }),
-              supabase.from("goals").select("*").eq("user_id", uid).order("created_at", { ascending: true }),
-            ]);
-            setSnapshot((s) => ({
-              ...s,
-              financial_accounts: !accErr && Array.isArray(accounts) ? accounts : s.financial_accounts,
-              transactions: !txErr && Array.isArray(txs) ? txs : s.transactions,
-              income: !incomeErr && Array.isArray(income) ? income : s.income,
-              bills: !billsErr && Array.isArray(bills) ? bills : s.bills,
-              subscriptions: !subsErr && Array.isArray(subs) ? subs : s.subscriptions,
-              goals: !goalsErr && Array.isArray(goals) ? goals : s.goals,
-            }));
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+              const realUid = session.user.id;
+              const realEmail = session.user.email ?? null;
+              const [
+                profileRes,
+                accountRes,
+                settingsRes,
+                { data: income },
+                { data: bills },
+                { data: subs },
+                { data: goals },
+                { data: accounts },
+                { data: txs },
+              ] = await Promise.all([
+                supabase.from("profiles").select("*").eq("id", realUid).maybeSingle(),
+                supabase.from("accounts").select("*").eq("user_id", realUid).maybeSingle(),
+                supabase.from("settings").select("*").eq("user_id", realUid).maybeSingle(),
+                supabase.from("income").select("*").eq("user_id", realUid).order("created_at", { ascending: true }),
+                supabase.from("bills").select("*").eq("user_id", realUid).order("due_date", { ascending: true }),
+                supabase.from("subscriptions").select("*").eq("user_id", realUid).order("renewal_date", { ascending: true }),
+                supabase.from("goals").select("*").eq("user_id", realUid).order("created_at", { ascending: true }),
+                supabase.from("financial_accounts").select("*").eq("user_id", realUid).order("created_at", { ascending: true }),
+                supabase.from("transactions").select("*").eq("user_id", realUid).order("transaction_date", { ascending: true }),
+              ]);
+              // Bootstrap rows in case the DB trigger missed them (graceful fallback)
+              if (!profileRes.data) {
+                await supabase.from("profiles").upsert({ id: realUid, email: realEmail, name: snap.profile?.name ?? null, onboarding_complete: snap.profile?.onboarding_complete ?? false });
+              }
+              if (!accountRes.data) {
+                await supabase.from("accounts").upsert({ user_id: realUid, checking_balance: snap.account?.checking_balance ?? 0, savings_balance: snap.account?.savings_balance ?? 0 });
+              }
+              if (!settingsRes.data) {
+                await supabase.from("settings").upsert({ user_id: realUid, minimum_cushion: snap.settings?.minimum_cushion ?? 100, currency: snap.settings?.currency ?? "USD", pay_frequency: snap.settings?.pay_frequency ?? "biweekly" });
+              }
+              setSnapshot((s) => ({
+                ...s,
+                profile: profileRes.data ?? { id: realUid, email: realEmail, name: null, onboarding_complete: false, created_at: new Date().toISOString() },
+                account: accountRes.data ?? s.account,
+                settings: settingsRes.data ?? s.settings,
+                income: Array.isArray(income) ? income : s.income,
+                bills: Array.isArray(bills) ? bills : s.bills,
+                subscriptions: Array.isArray(subs) ? subs : s.subscriptions,
+                goals: Array.isArray(goals) ? goals : s.goals,
+                financial_accounts: Array.isArray(accounts) ? accounts : s.financial_accounts,
+                transactions: Array.isArray(txs) ? txs : s.transactions,
+              }));
+            }
           } catch {
             // ignore — stay with local data
           }
@@ -154,6 +178,24 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     } catch {}
   }, [snapshot, mode, ready]);
 
+  // Reset local state when the user signs out
+  useEffect(() => {
+    if (!isSupabaseConfigured()) return;
+    const supabase = getSupabaseBrowser();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT") {
+        const demo = buildDemoSnapshot();
+        setSnapshot(demo);
+        setMode("demo");
+        try {
+          localStorage.removeItem(STORAGE_KEY);
+          localStorage.removeItem(MODE_KEY);
+        } catch {}
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
   const reset = useCallback((nextMode: Mode) => {
     const next = nextMode === "demo" ? buildDemoSnapshot() : emptySnapshot();
     setSnapshot(next);
@@ -168,7 +210,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       ready,
       mode,
       reset,
-      updateAccount: (patch) =>
+      updateAccount: async (patch) => {
         setSnapshot((s) => ({
           ...s,
           account: {
@@ -182,17 +224,32 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             ...patch,
             updated_at: new Date().toISOString(),
           },
-        })),
-      updateSettings: (patch) =>
+        }));
+        if (isSupabaseConfigured() && userId !== "local-user") {
+          const supabase = getSupabaseBrowser();
+          try { await supabase.from("accounts").update({ ...patch, updated_at: new Date().toISOString() }).eq("user_id", userId); } catch { /* ignore */ }
+        }
+      },
+      updateSettings: async (patch) => {
         setSnapshot((s) => ({
           ...s,
           settings: { ...(s.settings as Settings), ...patch },
-        })),
-      updateProfile: (patch) =>
+        }));
+        if (isSupabaseConfigured() && userId !== "local-user") {
+          const supabase = getSupabaseBrowser();
+          try { await supabase.from("settings").update(patch).eq("user_id", userId); } catch { /* ignore */ }
+        }
+      },
+      updateProfile: async (patch) => {
         setSnapshot((s) => ({
           ...s,
           profile: { ...(s.profile as Profile), ...patch },
-        })),
+        }));
+        if (isSupabaseConfigured() && userId !== "local-user") {
+          const supabase = getSupabaseBrowser();
+          try { await supabase.from("profiles").update(patch).eq("id", userId); } catch { /* ignore */ }
+        }
+      },
       addIncome: async (input) => {
         const now = new Date().toISOString();
         const incomeItem = {
@@ -537,6 +594,18 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
                 : s.transactions,
             }));
           }
+        }
+      },
+      reloadFinancialAccounts: async () => {
+        if (!isSupabaseConfigured() || userId === "local-user") return;
+        const supabase = getSupabaseBrowser();
+        const { data } = await supabase
+          .from("financial_accounts")
+          .select("*")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: true });
+        if (Array.isArray(data)) {
+          setSnapshot((s) => ({ ...s, financial_accounts: data }));
         }
       },
     }),
