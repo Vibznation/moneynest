@@ -45,6 +45,7 @@ export default function AccountsPage() {
     addFinancialAccount,
     updateFinancialAccount,
     deleteFinancialAccount,
+    reloadFinancialAccounts,
   } = useData();
   const accounts = snapshot.financial_accounts;
   const currency = snapshot.settings?.currency ?? "USD";
@@ -58,7 +59,7 @@ export default function AccountsPage() {
   async function fetchPlaidToken() {
     setPlaidStatus("loading");
     try {
-      const res = await fetch("/api/plaid/create-link-token", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId: "local" }) });
+      const res = await fetch("/api/plaid/create-link-token", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId: snapshot.profile?.id ?? "local" }) });
       const data = await res.json() as { link_token?: string; error?: string };
       if (data.error) throw new Error(data.error);
       setPlaidToken(data.link_token ?? null);
@@ -67,24 +68,7 @@ export default function AccountsPage() {
     }
   }
 
-  const { open: openPlaid, ready: plaidReady } = usePlaidLink({
-    token: plaidToken ?? "",
-    onSuccess: useCallback(async (public_token: string) => {
-      try {
-        await fetch("/api/plaid/exchange-token", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ public_token }) });
-        setPlaidStatus("idle");
-        setPlaidToken(null);
-      } catch { /* ignore */ }
-    }, []),
-    onExit: useCallback(() => { setPlaidToken(null); setPlaidStatus("idle"); }, []),
-  });
 
-  useEffect(() => {
-    if (plaidToken && plaidReady) {
-      openPlaid();
-      setPlaidStatus("idle");
-    }
-  }, [plaidToken, plaidReady, openPlaid]);
 
   function openNew() {
     setEditing(null);
@@ -153,13 +137,28 @@ export default function AccountsPage() {
               Automatically sync balances and transactions via Plaid.
             </p>
           </div>
-          <Button
-            variant="secondary"
-            disabled={plaidStatus === "loading"}
-            onClick={fetchPlaidToken}
-          >
-            <Landmark size={16} /> {plaidStatus === "loading" ? "Connecting…" : plaidStatus === "error" ? "Retry" : "Connect"}
-          </Button>
+          {plaidToken ? (
+            <PlaidLinkLauncher
+              token={plaidToken}
+              onSuccess={async (public_token: string) => {
+                try {
+                  await fetch("/api/plaid/exchange-token", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ public_token }) });
+                  await reloadFinancialAccounts();
+                } catch { /* ignore */ }
+                setPlaidToken(null);
+                setPlaidStatus("idle");
+              }}
+              onExit={() => { setPlaidToken(null); setPlaidStatus("idle"); }}
+            />
+          ) : (
+            <Button
+              variant="secondary"
+              disabled={plaidStatus === "loading"}
+              onClick={fetchPlaidToken}
+            >
+              <Landmark size={16} /> {plaidStatus === "loading" ? "Connecting…" : plaidStatus === "error" ? "Retry" : "Connect"}
+            </Button>
+          )}
         </Card>
       </div>
 
@@ -553,4 +552,19 @@ function AccountModal({
       </div>
     </Modal>
   );
+}
+
+// Mounted only when we have a valid token — prevents Plaid script from loading multiple times
+function PlaidLinkLauncher({
+  token,
+  onSuccess,
+  onExit,
+}: {
+  token: string;
+  onSuccess: (public_token: string) => void;
+  onExit: () => void;
+}) {
+  const { open, ready } = usePlaidLink({ token, onSuccess, onExit });
+  useEffect(() => { if (ready) open(); }, [ready, open]);
+  return null;
 }
