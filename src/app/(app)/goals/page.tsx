@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { addMonths, format } from "date-fns";
+import { Plus, Pencil, Trash2, PiggyBank } from "lucide-react";
 import { useData } from "@/lib/data-store";
 import { Card, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -25,6 +26,7 @@ export default function GoalsPage() {
   const { snapshot, addGoal, updateGoal, deleteGoal } = useData();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Goal | null>(null);
+  const [contributeGoal, setContributeGoal] = useState<Goal | null>(null);
   const currency = snapshot.settings?.currency ?? "USD";
 
   return (
@@ -67,6 +69,13 @@ export default function GoalsPage() {
             const pct = g.target_amount
               ? Math.min(100, (g.current_amount / g.target_amount) * 100)
               : 0;
+            const remaining = Math.max(0, g.target_amount - g.current_amount);
+            const monthsLeft =
+              g.monthly_target > 0
+                ? Math.ceil(remaining / g.monthly_target)
+                : null;
+            const projectedDate =
+              monthsLeft !== null ? addMonths(new Date(), monthsLeft) : null;
             return (
               <Card key={g.id}>
                 <div className="flex items-start justify-between">
@@ -102,10 +111,30 @@ export default function GoalsPage() {
                 <div className="mt-3 flex items-center justify-between text-sm">
                   <span className="font-semibold">{Math.round(pct)}% complete</span>
                   <span className="text-foreground-muted">
-                    {formatCurrency(g.monthly_target, currency)}/mo target
+                    {formatCurrency(g.monthly_target, currency)}/mo
                   </span>
                 </div>
+                {projectedDate && pct < 100 && (
+                  <p className="mt-1 text-xs text-foreground-muted">
+                    On track to reach by{" "}
+                    <span className="font-medium text-foreground">
+                      {format(projectedDate, "MMM yyyy")}
+                    </span>
+                    {" "}({monthsLeft === 1 ? "1 month" : `${monthsLeft} months`})
+                  </p>
+                )}
+                {pct >= 100 && (
+                  <p className="mt-1 text-xs text-accent font-medium">Goal reached!</p>
+                )}
                 <p className="mt-3 text-sm text-foreground">{encouragement(pct)}</p>
+                {pct < 100 && (
+                  <button
+                    onClick={() => setContributeGoal(g)}
+                    className="mt-3 flex items-center gap-1.5 text-xs font-medium text-accent hover:underline"
+                  >
+                    <PiggyBank size={13} /> Add contribution
+                  </button>
+                )}
               </Card>
             );
           })}
@@ -122,7 +151,69 @@ export default function GoalsPage() {
           setOpen(false);
         }}
       />
+
+      <ContributeModal
+        goal={contributeGoal}
+        currency={currency}
+        onClose={() => setContributeGoal(null)}
+        onSubmit={(amount) => {
+          if (!contributeGoal) return;
+          updateGoal(contributeGoal.id, {
+            current_amount: contributeGoal.current_amount + amount,
+          });
+          setContributeGoal(null);
+        }}
+      />
     </div>
+  );
+}
+
+function ContributeModal({
+  goal,
+  currency,
+  onClose,
+  onSubmit,
+}: {
+  goal: Goal | null;
+  currency: string;
+  onClose: () => void;
+  onSubmit: (amount: number) => void;
+}) {
+  const [amount, setAmount] = useState("");
+  useEffect(() => { setAmount(""); }, [goal]);
+
+  if (!goal) return null;
+  return (
+    <Modal open={!!goal} onClose={onClose} title={`Contribute to ${goal.name}`}>
+      <p className="text-sm text-foreground-muted mb-4">
+        Currently saved: {formatCurrency(goal.current_amount, currency)} of {formatCurrency(goal.target_amount, currency)}
+      </p>
+      <form
+        className="flex flex-col gap-3"
+        onSubmit={(e) => {
+          e.preventDefault();
+          const n = parseFloat(amount);
+          if (!n || n <= 0) return;
+          onSubmit(n);
+        }}
+      >
+        <Field label="Amount to add">
+          <Input
+            type="number"
+            step="0.01"
+            min={0.01}
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            autoFocus
+            required
+          />
+        </Field>
+        <div className="flex justify-end gap-2 mt-2">
+          <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
+          <Button type="submit">Add contribution</Button>
+        </div>
+      </form>
+    </Modal>
   );
 }
 

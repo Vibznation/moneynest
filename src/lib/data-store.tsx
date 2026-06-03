@@ -103,42 +103,37 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(demo));
           localStorage.setItem(MODE_KEY, "demo");
         }
-        // Supabase sync: fetch accounts, transactions, and income if configured and user is logged in
+        // Supabase sync: fetch accounts, transactions, income, bills, subscriptions, goals
         if (isSupabaseConfigured() && snap.profile?.id) {
           try {
             const supabase = getSupabaseBrowser();
+            const uid = snap.profile.id;
             const [
               { data: accounts, error: accErr },
               { data: txs, error: txErr },
               { data: income, error: incomeErr },
+              { data: bills, error: billsErr },
+              { data: subs, error: subsErr },
+              { data: goals, error: goalsErr },
             ] = await Promise.all([
-              supabase
-                .from("financial_accounts")
-                .select("*")
-                .eq("user_id", snap.profile.id)
-                .order("created_at", { ascending: true }),
-              supabase
-                .from("transactions")
-                .select("*")
-                .eq("user_id", snap.profile.id)
-                .order("transaction_date", { ascending: true }),
-              supabase
-                .from("income")
-                .select("*")
-                .eq("user_id", snap.profile.id)
-                .order("created_at", { ascending: true }),
+              supabase.from("financial_accounts").select("*").eq("user_id", uid).order("created_at", { ascending: true }),
+              supabase.from("transactions").select("*").eq("user_id", uid).order("transaction_date", { ascending: true }),
+              supabase.from("income").select("*").eq("user_id", uid).order("created_at", { ascending: true }),
+              supabase.from("bills").select("*").eq("user_id", uid).order("due_date", { ascending: true }),
+              supabase.from("subscriptions").select("*").eq("user_id", uid).order("renewal_date", { ascending: true }),
+              supabase.from("goals").select("*").eq("user_id", uid).order("created_at", { ascending: true }),
             ]);
-            if (!accErr && Array.isArray(accounts)) {
-              setSnapshot((s) => ({ ...s, financial_accounts: accounts }));
-            }
-            if (!txErr && Array.isArray(txs)) {
-              setSnapshot((s) => ({ ...s, transactions: txs }));
-            }
-            if (!incomeErr && Array.isArray(income)) {
-              setSnapshot((s) => ({ ...s, income }));
-            }
-          } catch (err) {
-            // ignore for now
+            setSnapshot((s) => ({
+              ...s,
+              financial_accounts: !accErr && Array.isArray(accounts) ? accounts : s.financial_accounts,
+              transactions: !txErr && Array.isArray(txs) ? txs : s.transactions,
+              income: !incomeErr && Array.isArray(income) ? income : s.income,
+              bills: !billsErr && Array.isArray(bills) ? bills : s.bills,
+              subscriptions: !subsErr && Array.isArray(subs) ? subs : s.subscriptions,
+              goals: !goalsErr && Array.isArray(goals) ? goals : s.goals,
+            }));
+          } catch {
+            // ignore — stay with local data
           }
         }
       } catch {
@@ -271,77 +266,126 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
           }
         }
       },
-      addBill: (input) =>
-        setSnapshot((s) => ({
-          ...s,
-          bills: [
-            ...s.bills,
-            {
-              ...input,
-              id: uid(),
-              user_id: userId,
-              created_at: new Date().toISOString(),
-            },
-          ],
-        })),
-      updateBill: (id, patch) =>
-        setSnapshot((s) => ({
-          ...s,
-          bills: s.bills.map((b) => (b.id === id ? { ...b, ...patch } : b)),
-        })),
-      deleteBill: (id) =>
-        setSnapshot((s) => ({
-          ...s,
-          bills: s.bills.filter((b) => b.id !== id),
-        })),
-      addSubscription: (input) =>
-        setSnapshot((s) => ({
-          ...s,
-          subscriptions: [
-            ...s.subscriptions,
-            {
-              ...input,
-              id: uid(),
-              user_id: userId,
-              created_at: new Date().toISOString(),
-            },
-          ],
-        })),
-      updateSubscription: (id, patch) =>
-        setSnapshot((s) => ({
-          ...s,
-          subscriptions: s.subscriptions.map((x) =>
-            x.id === id ? { ...x, ...patch } : x,
-          ),
-        })),
-      deleteSubscription: (id) =>
-        setSnapshot((s) => ({
-          ...s,
-          subscriptions: s.subscriptions.filter((x) => x.id !== id),
-        })),
-      addGoal: (input) =>
-        setSnapshot((s) => ({
-          ...s,
-          goals: [
-            ...s.goals,
-            {
-              ...input,
-              id: uid(),
-              user_id: userId,
-              created_at: new Date().toISOString(),
-            },
-          ],
-        })),
-      updateGoal: (id, patch) =>
-        setSnapshot((s) => ({
-          ...s,
-          goals: s.goals.map((g) => (g.id === id ? { ...g, ...patch } : g)),
-        })),
-      deleteGoal: (id) =>
-        setSnapshot((s) => ({
-          ...s,
-          goals: s.goals.filter((g) => g.id !== id),
-        })),
+      addBill: async (input) => {
+        const now = new Date().toISOString();
+        const bill = { ...input, id: uid(), user_id: userId, created_at: now };
+        setSnapshot((s) => ({ ...s, bills: [...s.bills, bill] }));
+        if (isSupabaseConfigured() && userId !== "local-user") {
+          try {
+            const supabase = getSupabaseBrowser();
+            const { error } = await supabase.from("bills").insert([bill]);
+            if (error) throw error;
+          } catch {
+            setSnapshot((s) => ({ ...s, bills: s.bills.filter((b) => b.id !== bill.id) }));
+          }
+        }
+      },
+      updateBill: async (id, patch) => {
+        const prev = snapshot.bills.find((b) => b.id === id);
+        setSnapshot((s) => ({ ...s, bills: s.bills.map((b) => (b.id === id ? { ...b, ...patch } : b)) }));
+        if (isSupabaseConfigured() && userId !== "local-user") {
+          try {
+            const supabase = getSupabaseBrowser();
+            const { error } = await supabase.from("bills").update(patch).eq("id", id);
+            if (error) throw error;
+          } catch {
+            setSnapshot((s) => ({ ...s, bills: prev ? s.bills.map((b) => (b.id === id ? prev : b)) : s.bills }));
+          }
+        }
+      },
+      deleteBill: async (id) => {
+        const prev = snapshot.bills.find((b) => b.id === id);
+        setSnapshot((s) => ({ ...s, bills: s.bills.filter((b) => b.id !== id) }));
+        if (isSupabaseConfigured() && userId !== "local-user") {
+          try {
+            const supabase = getSupabaseBrowser();
+            const { error } = await supabase.from("bills").delete().eq("id", id);
+            if (error) throw error;
+          } catch {
+            setSnapshot((s) => ({ ...s, bills: prev ? [...s.bills, prev] : s.bills }));
+          }
+        }
+      },
+      addSubscription: async (input) => {
+        const now = new Date().toISOString();
+        const sub = { ...input, id: uid(), user_id: userId, created_at: now };
+        setSnapshot((s) => ({ ...s, subscriptions: [...s.subscriptions, sub] }));
+        if (isSupabaseConfigured() && userId !== "local-user") {
+          try {
+            const supabase = getSupabaseBrowser();
+            const { error } = await supabase.from("subscriptions").insert([sub]);
+            if (error) throw error;
+          } catch {
+            setSnapshot((s) => ({ ...s, subscriptions: s.subscriptions.filter((x) => x.id !== sub.id) }));
+          }
+        }
+      },
+      updateSubscription: async (id, patch) => {
+        const prev = snapshot.subscriptions.find((x) => x.id === id);
+        setSnapshot((s) => ({ ...s, subscriptions: s.subscriptions.map((x) => (x.id === id ? { ...x, ...patch } : x)) }));
+        if (isSupabaseConfigured() && userId !== "local-user") {
+          try {
+            const supabase = getSupabaseBrowser();
+            const { error } = await supabase.from("subscriptions").update(patch).eq("id", id);
+            if (error) throw error;
+          } catch {
+            setSnapshot((s) => ({ ...s, subscriptions: prev ? s.subscriptions.map((x) => (x.id === id ? prev : x)) : s.subscriptions }));
+          }
+        }
+      },
+      deleteSubscription: async (id) => {
+        const prev = snapshot.subscriptions.find((x) => x.id === id);
+        setSnapshot((s) => ({ ...s, subscriptions: s.subscriptions.filter((x) => x.id !== id) }));
+        if (isSupabaseConfigured() && userId !== "local-user") {
+          try {
+            const supabase = getSupabaseBrowser();
+            const { error } = await supabase.from("subscriptions").delete().eq("id", id);
+            if (error) throw error;
+          } catch {
+            setSnapshot((s) => ({ ...s, subscriptions: prev ? [...s.subscriptions, prev] : s.subscriptions }));
+          }
+        }
+      },
+      addGoal: async (input) => {
+        const now = new Date().toISOString();
+        const goal = { ...input, id: uid(), user_id: userId, created_at: now };
+        setSnapshot((s) => ({ ...s, goals: [...s.goals, goal] }));
+        if (isSupabaseConfigured() && userId !== "local-user") {
+          try {
+            const supabase = getSupabaseBrowser();
+            const { error } = await supabase.from("goals").insert([goal]);
+            if (error) throw error;
+          } catch {
+            setSnapshot((s) => ({ ...s, goals: s.goals.filter((g) => g.id !== goal.id) }));
+          }
+        }
+      },
+      updateGoal: async (id, patch) => {
+        const prev = snapshot.goals.find((g) => g.id === id);
+        setSnapshot((s) => ({ ...s, goals: s.goals.map((g) => (g.id === id ? { ...g, ...patch } : g)) }));
+        if (isSupabaseConfigured() && userId !== "local-user") {
+          try {
+            const supabase = getSupabaseBrowser();
+            const { error } = await supabase.from("goals").update(patch).eq("id", id);
+            if (error) throw error;
+          } catch {
+            setSnapshot((s) => ({ ...s, goals: prev ? s.goals.map((g) => (g.id === id ? prev : g)) : s.goals }));
+          }
+        }
+      },
+      deleteGoal: async (id) => {
+        const prev = snapshot.goals.find((g) => g.id === id);
+        setSnapshot((s) => ({ ...s, goals: s.goals.filter((g) => g.id !== id) }));
+        if (isSupabaseConfigured() && userId !== "local-user") {
+          try {
+            const supabase = getSupabaseBrowser();
+            const { error } = await supabase.from("goals").delete().eq("id", id);
+            if (error) throw error;
+          } catch {
+            setSnapshot((s) => ({ ...s, goals: prev ? [...s.goals, prev] : s.goals }));
+          }
+        }
+      },
       addFinancialAccount: async (input) => {
         const now = new Date().toISOString();
         const account = {

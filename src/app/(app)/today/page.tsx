@@ -14,6 +14,7 @@ import {
   Target,
   ArrowRight,
   TrendingDown,
+  BellRing,
 } from "lucide-react";
 import { useData } from "@/lib/data-store";
 import {
@@ -23,6 +24,7 @@ import {
   evaluateBeforeYouSpend,
   generateNestGuideMessage,
   getNextBill,
+  getOverdueBills,
   getRenewingSoon,
   toDate,
 } from "@/lib/calculations";
@@ -34,10 +36,11 @@ import { formatCurrency } from "@/lib/utils";
 import { CalmScoreRing } from "@/components/today/CalmScoreRing";
 
 export default function TodayPage() {
-  const { snapshot } = useData();
+  const { snapshot, updateBill } = useData();
   const safe = useMemo(() => calculateSafeToSpend(snapshot), [snapshot]);
   const calm = useMemo(() => calculateCalmScore(snapshot), [snapshot]);
   const nextBill = useMemo(() => getNextBill(snapshot.bills), [snapshot]);
+  const overdue = useMemo(() => getOverdueBills(snapshot.bills), [snapshot]);
   const renewals = useMemo(
     () => getRenewingSoon(snapshot.subscriptions, 7),
     [snapshot],
@@ -155,6 +158,33 @@ export default function TodayPage() {
         </div>
       </Card>
 
+      {/* Overdue alert banner */}
+      {overdue.length > 0 && (
+        <Card className="bg-danger-soft border-danger-soft">
+          <div className="flex items-start gap-3">
+            <BellRing size={18} className="text-danger shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-foreground">
+                {overdue.length} overdue bill{overdue.length > 1 ? "s" : ""}
+              </p>
+              <ul className="mt-1 space-y-1">
+                {overdue.map((b) => (
+                  <li key={b.id} className="flex items-center justify-between text-sm">
+                    <span className="truncate text-foreground-muted">{b.name} · {formatCurrency(b.amount, currency)}</span>
+                    <button
+                      onClick={() => updateBill(b.id, { status: "paid" })}
+                      className="ml-3 shrink-0 text-xs font-medium text-accent hover:underline"
+                    >
+                      Mark paid
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </Card>
+      )}
+
       {/* Calm score reasons */}
       {calm.reasons.length > 0 && (
         <Card>
@@ -220,6 +250,14 @@ export default function TodayPage() {
                       ? "Due soon"
                       : "Upcoming"}
                 </Badge>
+                {nextBill.status !== "paid" && (
+                  <button
+                    onClick={() => updateBill(nextBill.id, { status: "paid" })}
+                    className="mt-1.5 block text-xs text-accent hover:underline w-full text-right"
+                  >
+                    Mark paid
+                  </button>
+                )}
               </div>
             </div>
           ) : (

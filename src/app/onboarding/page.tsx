@@ -65,21 +65,28 @@ export default function OnboardingPage() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4 sm:p-8">
       <div className="w-full max-w-2xl">
-        <div className="mb-6 flex items-center justify-between text-xs text-foreground-muted">
-          <span>
-            Step {STEPS.indexOf(step) + 1} of {STEPS.length}
-          </span>
-          {step !== "welcome" && step !== "done" ? (
-            <button
-              onClick={() => {
-                updateProfile({ onboarding_complete: true });
-                router.replace("/today");
-              }}
-              className="hover:text-foreground"
-            >
-              Skip setup
-            </button>
-          ) : null}
+        {/* Progress bar */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between text-xs text-foreground-muted mb-2">
+            <span>Step {STEPS.indexOf(step) + 1} of {STEPS.length}</span>
+            {step !== "welcome" && step !== "done" ? (
+              <button
+                onClick={() => {
+                  updateProfile({ onboarding_complete: true });
+                  router.replace("/today");
+                }}
+                className="hover:text-foreground"
+              >
+                Skip setup
+              </button>
+            ) : null}
+          </div>
+          <div className="h-1.5 w-full rounded-full bg-surface-muted overflow-hidden">
+            <div
+              className="h-full rounded-full bg-accent transition-all duration-300"
+              style={{ width: `${((STEPS.indexOf(step) + 1) / STEPS.length) * 100}%` }}
+            />
+          </div>
         </div>
 
         {step === "welcome" && (
