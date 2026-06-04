@@ -152,7 +152,7 @@ function ReportsContent() {
     const win = window.open("", "_blank");
     if (!win) return;
     win.document.write(`<!DOCTYPE html><html><head>
-      <title>Dueviq Report · ${report.monthLabel}</title>
+      <title>Dueviq Report · ${report.month}</title>
       <style>
         body{font-family:system-ui,sans-serif;padding:32px;color:#1a1a1a;max-width:600px;margin:0 auto}
         h2{font-size:14px;font-weight:600;margin-top:20px;border-bottom:1px solid #eee;padding-bottom:4px;text-transform:uppercase;letter-spacing:.04em;color:#666}
@@ -197,7 +197,7 @@ function ReportsContent() {
               <p className="text-xs uppercase tracking-wide text-foreground-muted">
                 Dueviq Monthly Report
               </p>
-              <h2 className="text-lg font-bold text-foreground">{report.monthLabel}</h2>
+              <h2 className="text-lg font-bold text-foreground">{report.month}</h2>
             </div>
           </div>
 

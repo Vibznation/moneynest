@@ -162,13 +162,15 @@ function MarketWatchContent() {
                 onChange={(e) => setForm((f) => ({ ...f, alertPrice: e.target.value }))}
               />
             </Field>
-            <Field label="Notes (optional)" className="sm:col-span-2">
-              <Input
-                placeholder="Watching for earnings, etc."
-                value={form.notes}
-                onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
-              />
-            </Field>
+            <div className="sm:col-span-2">
+              <Field label="Notes (optional)">
+                <Input
+                  placeholder="Watching for earnings, etc."
+                  value={form.notes}
+                  onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
+                />
+              </Field>
+            </div>
           </div>
           <div className="mt-3 flex gap-2">
             <Button variant="primary" onClick={addItem}>Add to watchlist</Button>
