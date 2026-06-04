@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { Settings as SettingsIcon } from "lucide-react";
 import { DesktopNav, MobileTabBar } from "@/components/app-shell/Nav";
@@ -11,9 +12,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <header className="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
           <Link href="/today" className="flex items-center gap-2">
-            <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-accent text-white font-bold text-xs">
-              D
-            </span>
+            <Image src="/icon-192.png" alt="Dueviq" width={28} height={28} className="rounded-lg" />
             <span className="font-semibold tracking-tight">Dueviq</span>
           </Link>
           <DesktopNav />
