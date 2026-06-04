@@ -22,7 +22,7 @@ import {
   calculateSafeToSpend,
   daysUntil,
   evaluateBeforeYouSpend,
-  generateNestGuideMessage,
+  generateDueviqGuideMessage,
   getNextBill,
   getOverdueBills,
   getRenewingSoon,
@@ -46,7 +46,7 @@ export default function TodayPage() {
     [snapshot],
   );
   const message = useMemo(
-    () => generateNestGuideMessage(snapshot),
+    () => generateDueviqGuideMessage(snapshot),
     [snapshot],
   );
   const currency = snapshot.settings?.currency ?? "USD";
@@ -136,14 +136,14 @@ export default function TodayPage() {
           <div className="flex sm:flex-col items-center sm:items-end gap-4 sm:gap-3 self-start">
             <CalmScoreRing score={calm.score} label={calm.label} />
             <p className="text-xs text-foreground-muted text-right max-w-[10rem] hidden sm:block">
-              Money Calm Score · cushion{" "}
+              Calm Score · cushion{" "}
               {formatCurrency(safe.cushion, currency)}
             </p>
           </div>
         </div>
       </Card>
 
-      {/* Nest Guide message */}
+      {/* Dueviq Guide message */}
       <Card className="bg-accent-soft border-accent-soft">
         <div className="flex items-start gap-3">
           <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-surface text-foreground">
@@ -151,7 +151,7 @@ export default function TodayPage() {
           </span>
           <div className="min-w-0">
             <p className="text-xs font-medium uppercase tracking-wide text-foreground-muted">
-              Nest Guide
+              Dueviq Guide
             </p>
             <p className="mt-1 text-foreground">{message}</p>
           </div>

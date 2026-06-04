@@ -12,9 +12,14 @@ const geistSans = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "MoneyNest — Financial peace, organized",
+  title: {
+    default: "Dueviq — Simple Money Organizer",
+    template: "%s — Dueviq",
+  },
   description:
-    "Organize your bills, subscriptions, goals, and spending in one peaceful place.",
+    "Know what's due. Know what's safe to spend. Organize your bills, subscriptions, goals, and accounts in one calm place.",
+  applicationName: "Dueviq",
+  keywords: ["bills", "budget", "subscriptions", "savings goals", "personal finance", "money organizer"],
 };
 
 export default function RootLayout({
@@ -31,7 +36,7 @@ export default function RootLayout({
       <head>
         <ThemeScript />
         <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#5b7f5e" />
+        <meta name="theme-color" content="#102A43" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <link rel="apple-touch-icon" href="/icon.svg" />

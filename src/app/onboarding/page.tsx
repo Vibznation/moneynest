@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { addDays, format } from "date-fns";
-import { ArrowRight, Check, Plus, Sparkles } from "lucide-react";
+import { ArrowRight, Building2, Check, Plus, Sparkles } from "lucide-react";
 import { useData } from "@/lib/data-store";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -29,6 +29,7 @@ const STEPS = [
   "bills",
   "subscriptions",
   "goal",
+  "bank",
   "done",
 ] as const;
 
@@ -77,7 +78,7 @@ export default function OnboardingPage() {
                 }}
                 className="hover:text-foreground"
               >
-                Skip setup
+                Go to app
               </button>
             ) : null}
           </div>
@@ -95,11 +96,13 @@ export default function OnboardingPage() {
               <Sparkles size={20} />
             </div>
             <h1 className="mt-4 text-3xl font-semibold tracking-tight">
-              Welcome to MoneyNest
+              Welcome to Dueviq
             </h1>
             <p className="mt-2 text-foreground-muted">
-              Organize your bills, subscriptions, goals, and spending in one
-              peaceful place.
+              Organize your bills, accounts, goals, and spending in one calm place.
+            </p>
+            <p className="mt-1 text-sm font-medium text-accent">
+              Know what&apos;s due. Know what&apos;s safe to spend.
             </p>
             <div className="mt-6 grid gap-2 sm:grid-cols-2">
               <Button
@@ -109,7 +112,7 @@ export default function OnboardingPage() {
                 }}
                 size="lg"
               >
-                Start Organizing <ArrowRight size={16} />
+              Start Organizing <ArrowRight size={16} />
               </Button>
               <Button
                 variant="secondary"
@@ -147,20 +150,22 @@ export default function OnboardingPage() {
           />
         )}
 
+        {step === "bank" && <BankStep onNext={next} onSkip={skip} />}
+
         {step === "done" && (
           <Card className="text-center">
             <div className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-accent-soft">
               <Check size={20} />
             </div>
             <h1 className="mt-4 text-3xl font-semibold tracking-tight">
-              Your MoneyNest is ready.
+              You&apos;re all set.
             </h1>
             <p className="mt-2 text-foreground-muted">
-              You can always add more later. Calm starts here.
+              Dueviq is ready. You can always add more later.
             </p>
             <div className="mt-6 flex justify-center">
               <Button onClick={finish} size="lg">
-                Go to Today <ArrowRight size={16} />
+                Open Dueviq <ArrowRight size={16} />
               </Button>
             </div>
           </Card>
@@ -636,6 +641,39 @@ function GoalStep({
           </p>
         ) : null}
       </form>
+    </Card>
+  );
+}
+
+function BankStep({
+  onNext,
+  onSkip,
+}: {
+  onNext: () => void;
+  onSkip: () => void;
+}) {
+  return (
+    <Card className="text-center">
+      <div className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-info-soft">
+        <Building2 size={22} className="text-info" />
+      </div>
+      <h2 className="mt-4 text-2xl font-semibold tracking-tight">
+        Connect a bank account
+      </h2>
+      <p className="mt-2 text-sm text-foreground-muted">
+        Automatically sync your balances and transactions. This is optional — you can always do it later from the Accounts page.
+      </p>
+      <p className="mt-1 text-xs text-foreground-muted">
+        Dueviq uses Plaid to connect securely. Your credentials are never stored.
+      </p>
+      <div className="mt-6 grid gap-2 sm:grid-cols-2">
+        <Button onClick={onNext} size="lg">
+          Connect bank <ArrowRight size={16} />
+        </Button>
+        <Button variant="secondary" size="lg" onClick={onSkip}>
+          Skip for now
+        </Button>
+      </div>
     </Card>
   );
 }

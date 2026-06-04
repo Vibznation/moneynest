@@ -16,7 +16,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>("light");
 
   useEffect(() => {
-    const stored = (localStorage.getItem("moneynest-theme") as Theme | null);
+    const stored = (localStorage.getItem("dueviq-theme") as Theme | null);
     const prefers = window.matchMedia("(prefers-color-scheme: dark)").matches;
     const initial: Theme = stored ?? (prefers ? "dark" : "light");
     setThemeState(initial);
@@ -27,7 +27,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     setThemeState(t);
     document.documentElement.classList.toggle("dark", t === "dark");
     try {
-      localStorage.setItem("moneynest-theme", t);
+      localStorage.setItem("dueviq-theme", t);
     } catch {}
   };
 

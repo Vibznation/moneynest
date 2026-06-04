@@ -2,8 +2,8 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy — MoneyNest",
-  description: "How MoneyNest collects, uses, and protects your data.",
+  title: "Privacy Policy — Dueviq",
+  description: "How Dueviq collects, uses, and protects your data.",
 };
 
 export default function PrivacyPolicyPage() {
@@ -17,7 +17,7 @@ export default function PrivacyPolicyPage() {
             href="/"
             className="text-sm text-foreground-muted hover:text-foreground transition-colors"
           >
-            ← Back to MoneyNest
+            ← Back to Dueviq
           </Link>
         </div>
 
@@ -31,7 +31,7 @@ export default function PrivacyPolicyPage() {
           <section>
             <h2 className="text-lg font-semibold mb-3">1. Who We Are</h2>
             <p className="text-sm text-foreground-muted leading-relaxed">
-              MoneyNest (&quot;we&quot;, &quot;us&quot;, or &quot;our&quot;) is a personal finance app that helps you
+              Dueviq (&quot;we&quot;, &quot;us&quot;, or &quot;our&quot;) is a personal finance app that helps you
               organize your bills, subscriptions, savings goals, and spending in one place.
               This Privacy Policy explains what data we collect, how we use it, and your rights
               regarding that data.
@@ -73,7 +73,7 @@ export default function PrivacyPolicyPage() {
           <section>
             <h2 className="text-lg font-semibold mb-3">3. Third-Party Services</h2>
             <p className="text-sm text-foreground-muted leading-relaxed mb-4">
-              MoneyNest relies on the following third-party services. Each has its own privacy policy
+              Dueviq relies on the following third-party services. Each has its own privacy policy
               that governs how they handle data.
             </p>
 
@@ -104,7 +104,7 @@ export default function PrivacyPolicyPage() {
                 <h3 className="text-sm font-semibold mb-1">Plaid (Bank Account Linking — Optional)</h3>
                 <p className="text-sm text-foreground-muted leading-relaxed">
                   If you choose to link a bank account, we use <strong>Plaid</strong> to securely connect
-                  to your financial institution. MoneyNest requests <em>read-only</em> access only;
+                  to your financial institution. Dueviq requests <em>read-only</em> access only;
                   we cannot move or transfer money. Plaid processes your banking credentials directly
                   and does not share them with us.
                 </p>
@@ -145,7 +145,7 @@ export default function PrivacyPolicyPage() {
           <section>
             <h2 className="text-lg font-semibold mb-3">4. How We Use Your Data</h2>
             <ul className="list-disc list-inside space-y-2 text-sm text-foreground-muted">
-              <li>To provide, maintain, and improve the MoneyNest service.</li>
+              <li>To provide, maintain, and improve the Dueviq service.</li>
               <li>To authenticate you and secure your account.</li>
               <li>To display your financial data within the app.</li>
               <li>To send transactional emails (e.g., email confirmation, password reset) via Supabase.</li>
@@ -182,7 +182,7 @@ export default function PrivacyPolicyPage() {
           <section>
             <h2 className="text-lg font-semibold mb-3">7. Children&apos;s Privacy</h2>
             <p className="text-sm text-foreground-muted leading-relaxed">
-              MoneyNest is not directed to children under the age of 13 (or the applicable age of
+              Dueviq is not directed to children under the age of 13 (or the applicable age of
               digital consent in your jurisdiction). We do not knowingly collect personal information
               from children. If you believe a child has provided us with personal data, please contact
               us so we can delete it.
@@ -210,7 +210,7 @@ export default function PrivacyPolicyPage() {
             <h2 className="text-lg font-semibold mb-3">9. Contact</h2>
             <p className="text-sm text-foreground-muted leading-relaxed">
               For any privacy-related questions or requests, please contact us at:{" "}
-              <strong className="text-foreground">privacy@moneynest.app</strong>
+              <strong className="text-foreground">privacy@Dueviq.app</strong>
             </p>
           </section>
 
@@ -218,7 +218,7 @@ export default function PrivacyPolicyPage() {
             <h2 className="text-lg font-semibold mb-3">10. Changes to This Policy</h2>
             <p className="text-sm text-foreground-muted leading-relaxed">
               We may update this policy from time to time. When we do, we will revise the
-              &quot;Effective date&quot; at the top of this page. Continued use of MoneyNest after changes
+              &quot;Effective date&quot; at the top of this page. Continued use of Dueviq after changes
               constitutes acceptance of the updated policy.
             </p>
           </section>
@@ -230,7 +230,7 @@ export default function PrivacyPolicyPage() {
             href="/"
             className="text-sm text-foreground-muted hover:text-foreground transition-colors"
           >
-            ← Back to MoneyNest
+            ← Back to Dueviq
           </Link>
         </div>
       </div>

@@ -1,15 +1,16 @@
-# MoneyNest
+# Dueviq — Simple Money Organizer
 
-A calm, simple financial organizer for everyday people. MoneyNest helps you see
-what bills are coming, what subscriptions you're paying for, what's safe to
-spend this week, and what goals you're saving toward — in one peaceful place.
+> **Know what's due. Know what's safe to spend.**
 
-Built with **Next.js (App Router) · TypeScript · Tailwind CSS · Supabase ·
-lucide-react · date-fns**.
+Dueviq helps everyday people organize bills, subscriptions, savings goals, and accounts so they can clearly see what is due and what money is safe to spend before payday.
 
-> The MVP runs immediately in a local "demo mode" using your browser's
-> localStorage, so you can try every screen without any setup. Real Supabase
-> auth/database is wired and ready when you provide credentials.
+Built with **Next.js (App Router) · TypeScript · Tailwind CSS · Supabase · lucide-react · date-fns**.
+
+> The MVP runs immediately in a local "demo mode" using your browser's localStorage, so you can try every screen without any setup. Real Supabase auth/database is wired and ready when you provide credentials.
+
+**Public store name:** Dueviq: Simple Money Organizer  
+**Pronunciation:** DOO-veek  
+**Tagline:** Know what's due. Know what's safe to spend.
 
 ---
 
@@ -22,9 +23,7 @@ npm run dev
 
 Then open <http://localhost:3000>.
 
-On first load, the app seeds itself with the sample data from the product
-brief (Rent, Phone, Netflix, Emergency Fund, etc.) so you can explore every
-screen. Clear it from **Settings → Reset & delete data**.
+On first load the app seeds itself with demo data (Rent, Phone, Netflix, Emergency Fund, etc.) so you can explore every screen. Clear it from **Settings → Reset & delete data**.
 
 ### Build / lint
 
@@ -45,7 +44,7 @@ src/
     onboarding/page.tsx     # Multi-step setup flow
     (app)/
       layout.tsx            # App shell (header, nav, mobile tab bar)
-      today/page.tsx        # Dashboard: safe-to-spend, calm score, Nest Guide
+      today/page.tsx        # Dashboard: safe-to-spend, calm score, Dueviq Guide
       bills/page.tsx        # Bill CRUD, paid/unpaid, overdue, upcoming
       subscriptions/page.tsx# Monthly + yearly totals, renewals, status
       goals/page.tsx        # Savings goals with progress
@@ -57,7 +56,7 @@ src/
     theme/                  # Theme provider, toggle, no-flash script
     ui/                     # Button, Card, Input, Modal, Badge, Progress…
   lib/
-    calculations.ts         # Safe-to-spend, calm score, money map, Nest Guide
+    calculations.ts         # Safe-to-spend, calm score, money map, Dueviq Guide
     constants.ts            # Categories + frequencies
     data-store.tsx          # Local-first store (CRUD over UserSnapshot)
     mock-data.ts            # Demo + empty snapshots
@@ -80,7 +79,7 @@ supabase/
   `-5` per Review subscription, `-10` if no savings goal. Clamped to `0–100`.
 - **Before You Spend** compares the amount to safe-to-spend at the 25 / 50 /
   100% thresholds and replies like a calm friend, not a banker.
-- **Nest Guide** is a rule-based message generator; the call site is the
+- **Dueviq Guide** is a rule-based message generator; the call site is the
   single seam for the future OpenAI assistant.
 
 ---
@@ -123,7 +122,7 @@ Never put the service-role key in the frontend.
   silently delete user-entered records.
 - Keep manual entry as a first-class fallback.
 
-## Adding the OpenAI "Nest Guide" assistant later
+## Adding the OpenAI "Dueviq Guide" assistant later
 
 - `generateNestGuideMessage(snapshot)` in `src/lib/calculations.ts` is the
   single seam. Wrap it with a server action / route handler that sends a
@@ -135,9 +134,9 @@ Never put the service-role key in the frontend.
 
 ## Adding Stripe later
 
-- Only if MoneyNest itself becomes a paid product. Use Stripe Checkout /
+- Only if Dueviq itself becomes a paid product. Use Stripe Checkout /
   Billing Portal rather than custom payment UI. Keep user-tracked subscriptions
-  (in the `subscriptions` table) separate from MoneyNest's own product billing.
+  (in the `subscriptions` table) separate from Dueviq's own product billing.
 
 ---
 

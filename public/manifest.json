@@ -1,11 +1,11 @@
 {
-  "name": "MoneyNest",
-  "short_name": "MoneyNest",
-  "description": "Your calm money dashboard",
+  "name": "Dueviq: Simple Money Organizer",
+  "short_name": "Dueviq",
+  "description": "Know what's due. Know what's safe to spend.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0d0d0d",
-  "theme_color": "#5b7f5e",
+  "background_color": "#102A43",
+  "theme_color": "#102A43",
   "orientation": "portrait",
   "icons": [
     {
@@ -26,3 +26,4 @@
     }
   ]
 }
+

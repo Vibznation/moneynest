@@ -1,4 +1,4 @@
--- MoneyNest schema
+-- Dueviq schema
 -- Run in the Supabase SQL editor. Enables RLS and per-user policies.
 
 create extension if not exists "pgcrypto";

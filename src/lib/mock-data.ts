@@ -13,7 +13,7 @@ export function buildDemoSnapshot(userId = "demo-user"): UserSnapshot {
   return {
     profile: {
       id: userId,
-      email: "demo@moneynest.app",
+      email: "demo@dueviq.com",
       name: "Demo",
       onboarding_complete: true,
       created_at: new Date().toISOString(),

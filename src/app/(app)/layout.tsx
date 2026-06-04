@@ -31,7 +31,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   if (!ready) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <p className="animate-pulse text-sm text-foreground-muted">Loading your nest…</p>
+        <p className="animate-pulse text-sm text-foreground-muted">Loading Dueviq…</p>
       </div>
     );
   }

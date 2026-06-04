@@ -22,7 +22,7 @@ export default function AuthPage() {
     return (
       <div className="flex min-h-screen items-center justify-center p-6">
         <div className="max-w-sm w-full text-center">
-          <h1 className="text-2xl font-semibold mb-2">MoneyNest</h1>
+          <h1 className="text-2xl font-semibold mb-2">Dueviq</h1>
           <p className="text-foreground-muted text-sm mb-6">
             Supabase is not configured. Set{" "}
             <code className="text-xs bg-surface-muted px-1 py-0.5 rounded">NEXT_PUBLIC_SUPABASE_URL</code>{" "}
@@ -64,8 +64,8 @@ export default function AuthPage() {
     <div className="flex min-h-screen items-center justify-center p-6">
       <div className="w-full max-w-sm">
         <div className="mb-6 text-center">
-          <h1 className="text-2xl font-semibold tracking-tight">MoneyNest</h1>
-          <p className="text-sm text-foreground-muted mt-1">Your calm money dashboard</p>
+          <h1 className="text-2xl font-semibold tracking-tight">Dueviq</h1>
+          <p className="text-sm text-foreground-muted mt-1">Know what&apos;s due. Know what&apos;s safe to spend.</p>
         </div>
 
         {/* Tabs */}

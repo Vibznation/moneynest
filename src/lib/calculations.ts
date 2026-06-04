@@ -362,16 +362,15 @@ export function buildMoneyMap(snapshot: UserSnapshot): MoneyMap {
   };
 }
 
-export function generateNestGuideMessage(snapshot: UserSnapshot): string {
+export function generateDueviqGuideMessage(snapshot: UserSnapshot): string {
   const safe = calculateSafeToSpend(snapshot);
   const overdue = getOverdueBills(snapshot.bills);
   const dueSoon = getDueSoonBills(snapshot.bills, 5);
   const renewing = getRenewingSoon(snapshot.subscriptions, 7);
+  const currency = snapshot.settings?.currency ?? "USD";
 
   if (safe.amount < 0) {
-    return `You are short by $${Math.abs(safe.amount).toFixed(
-      0,
-    )} before payday. Focus only on essentials this week.`;
+    return `You are short by $${Math.abs(safe.amount).toFixed(0)} before payday. Focus only on essentials this week.`;
   }
   if (overdue.length) {
     const b = overdue[0];
@@ -380,18 +379,22 @@ export function generateNestGuideMessage(snapshot: UserSnapshot): string {
   if (dueSoon.length) {
     const b = dueSoon[0];
     const d = daysUntil(b.due_date);
-    const when =
-      d === 0 ? "today" : d === 1 ? "tomorrow" : `in ${d} days`;
+    const when = d === 0 ? "today" : d === 1 ? "tomorrow" : `in ${d} days`;
     return `Your ${b.name} is due ${when}. Keep spending light until then.`;
   }
   if (renewing.length >= 2) {
     return `You have ${renewing.length} subscriptions renewing soon. A quick review could save you money.`;
   }
-  if (safe.amount > 0) {
-    return `Your bills are covered and you have $${safe.amount.toFixed(
-      0,
-    )} safe to spend before payday. Stay steady.`;
+  if (renewing.length === 1) {
+    return `${renewing[0].name} renews in ${daysUntil(renewing[0].renewal_date)} day${daysUntil(renewing[0].renewal_date) === 1 ? "" : "s"}. Make sure you still want it.`;
   }
+  if (!snapshot.goals.length) {
+    return `Your bills are covered and you have $${safe.amount.toFixed(0)} safe to spend. Consider setting a savings goal.`;
+  }
+  if (safe.amount > 0) {
+    return `Your bills are covered and you have $${safe.amount.toFixed(0)} safe to spend before payday. Stay steady.`;
+  }
+  void currency;
   return "Things look quiet. A calm week for your money.";
 }
 

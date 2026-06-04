@@ -1,5 +1,5 @@
-// MoneyNest Service Worker — cache-first for static assets, network-first for API/pages
-const CACHE_NAME = "moneynest-v2";
+// Dueviq Service Worker — cache-first for static assets, network-first for API/pages
+const CACHE_NAME = "Dueviq-v2";
 const PRECACHE_URLS = [
   "/",
   "/today",

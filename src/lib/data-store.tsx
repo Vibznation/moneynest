@@ -30,8 +30,8 @@ function migrateSnapshot(s: UserSnapshot): UserSnapshot {
   };
 }
 
-const STORAGE_KEY = "moneynest:snapshot:v1";
-const MODE_KEY = "moneynest:mode";
+const STORAGE_KEY = "dueviq:snapshot:v1";
+const MODE_KEY = "dueviq:mode";
 
 type Mode = "demo" | "fresh";
 

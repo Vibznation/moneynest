@@ -8,10 +8,10 @@ import { cn } from "@/lib/utils";
 const tabs = [
   { href: "/today", label: "Today", icon: Home },
   { href: "/bills", label: "Bills", icon: Receipt },
+  { href: "/accounts", label: "Accounts", icon: Landmark },
   { href: "/subscriptions", label: "Subs", icon: Repeat },
   { href: "/goals", label: "Goals", icon: Target },
   { href: "/money-map", label: "Map", icon: Map },
-  { href: "/accounts", label: "Accounts", icon: Landmark },
 ];
 
 export function MobileTabBar() {

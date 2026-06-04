@@ -35,7 +35,7 @@ export function CalmScoreRing({
       className={cn("relative inline-flex items-center justify-center", className)}
       style={{ width: size, height: size }}
       role="img"
-      aria-label={`Money calm score ${value} out of 100, ${label}`}
+      aria-label={`Calm Score ${value} out of 100, ${label}`}
     >
       <svg width={size} height={size} className="-rotate-90">
         <circle
