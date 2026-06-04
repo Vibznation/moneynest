@@ -351,9 +351,12 @@ create index if not exists invoices_user_idx on public.invoices(user_id);
 create index if not exists invoices_workspace_idx on public.invoices(workspace_id);
 
 -- Add FK from business_transactions to invoices (after both tables exist)
-alter table public.business_transactions
-  add constraint if not exists biz_tx_invoice_fk
-  foreign key (invoice_id) references public.invoices(id) on delete set null;
+do $$ begin
+  alter table public.business_transactions
+    add constraint biz_tx_invoice_fk
+    foreign key (invoice_id) references public.invoices(id) on delete set null;
+exception when duplicate_object then null;
+end $$;
 
 -- reports --------------------------------------------------------------
 -- Stored generated report metadata (PDF/CSV stored in Supabase Storage).
