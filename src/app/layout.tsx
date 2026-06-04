@@ -20,10 +20,6 @@ export const metadata: Metadata = {
     "Know what's due. Know what's safe to spend. Organize your bills, subscriptions, goals, and accounts in one calm place.",
   applicationName: "Dueviq",
   keywords: ["bills", "budget", "subscriptions", "savings goals", "personal finance", "money organizer"],
-  icons: {
-    icon: "/icon-192.png",
-    apple: "/icon-512.png",
-  },
 };
 
 export default function RootLayout({
