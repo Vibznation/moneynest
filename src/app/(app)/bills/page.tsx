@@ -48,6 +48,8 @@ export default function BillsPage() {
     const sorted = [...snapshot.bills].sort(
       (a, b) => toDate(a.due_date).getTime() - toDate(b.due_date).getTime(),
     );
+    const overdueIds = new Set(overdue.map((b) => b.id));
+    const upcomingIds = new Set(upcoming.map((b) => b.id));
     switch (filter) {
       case "paid":
         return sorted.filter((b) => b.status === "paid");
@@ -64,9 +66,10 @@ export default function BillsPage() {
           return d >= 0 && d <= 7;
         });
       default:
-        return sorted;
+        // exclude bills already shown in the Overdue / Upcoming sections
+        return sorted.filter((b) => !overdueIds.has(b.id) && !upcomingIds.has(b.id));
     }
-  }, [snapshot.bills, filter]);
+  }, [snapshot.bills, filter, overdue, upcoming]);
 
   function openNew() {
     setEditing(null);

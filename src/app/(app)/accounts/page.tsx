@@ -171,7 +171,7 @@ export default function AccountsPage() {
       {/* Privacy note */}
       <p className="flex items-start gap-2 text-xs text-foreground-muted">
         <ShieldCheck size={14} className="mt-0.5 shrink-0 text-accent" />
-        Bank linking is optional. Dueviq works even if you prefer to enter
+        Bank linking is optional. MoneyNest works even if you prefer to enter
         your money manually.
       </p>
 

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 
-const CONSENT_KEY = "dueviq:consent:v1";
+const CONSENT_KEY = "moneynest:consent:v1";
 
 export function ConsentBanner() {
   const [visible, setVisible] = useState(false);
@@ -39,7 +39,7 @@ export function ConsentBanner() {
       <div className="mx-auto max-w-xl rounded-2xl bg-surface border border-border shadow-lg p-5">
         <p className="text-sm font-semibold mb-1">Before you continue</p>
         <p className="text-sm text-foreground-muted leading-relaxed">
-          Dueviq stores your financial data locally and, if you sign in, via{" "}
+          MoneyNest stores your financial data locally and, if you sign in, via{" "}
           <strong className="text-foreground">Supabase</strong> (authentication &amp; database). If you
           link a bank account, your data passes through{" "}
           <strong className="text-foreground">Plaid</strong> (read-only). We do not sell your data
