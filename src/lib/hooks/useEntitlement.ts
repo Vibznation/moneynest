@@ -22,6 +22,19 @@ export function useEntitlement(): UseEntitlementResult {
     async function fetch() {
       setLoading(true);
 
+      // Dev/owner override — set via /admin page or browser console:
+      // localStorage.setItem("dueviq:plan-override", "business")
+      const override = typeof window !== "undefined"
+        ? localStorage.getItem("dueviq:plan-override")
+        : null;
+      if (override === "business" || override === "plus_personal") {
+        if (!cancelled) {
+          setEntitlement(override as EntitlementType);
+          setLoading(false);
+        }
+        return;
+      }
+
       if (!isSupabaseConfigured()) {
         if (!cancelled) setLoading(false);
         return;

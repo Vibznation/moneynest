@@ -56,7 +56,7 @@ export default function SettingsPage() {
     if (perm === "granted") {
       new Notification("Dueviq reminders enabled", {
         body: "You'll be notified about upcoming bills and renewals.",
-        icon: "/icon.svg",
+        icon: "/icon-192.png",
       });
     }
   }
