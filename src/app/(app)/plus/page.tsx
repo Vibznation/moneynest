@@ -20,6 +20,7 @@ import {
 import { Card, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { Modal } from "@/components/ui/Modal";
 import { cn } from "@/lib/utils";
 import { PLANS, type EntitlementType } from "@/lib/entitlements";
 
@@ -138,6 +139,60 @@ const BUSINESS_EXTRA = [
 
 // ─── Plan card ───────────────────────────────────────────────────────────────
 
+function UpgradeModal({
+  plan,
+  price,
+  onClose,
+}: {
+  plan: (typeof PLANS)[number];
+  price: string;
+  onClose: () => void;
+}) {
+  return (
+    <Modal open onClose={onClose} title={`Upgrade to ${plan.name}`} size="sm">
+      <div className="flex flex-col gap-5">
+        <div className="rounded-2xl bg-accent-soft border border-accent p-4 text-center">
+          <p className="text-3xl font-bold text-accent">{price}</p>
+          <p className="mt-0.5 text-sm text-foreground-muted">{plan.name}</p>
+        </div>
+
+        <div className="flex flex-col gap-2 text-sm text-foreground-muted">
+          <p className="text-foreground font-medium">How to subscribe</p>
+          <ol className="list-decimal list-inside space-y-1.5 leading-relaxed">
+            <li>Open Dueviq on your Android device or in Google Play.</li>
+            <li>Tap <strong>Dueviq+</strong> in Today or Settings.</li>
+            <li>Select your plan and complete checkout through Google Play.</li>
+            <li>Your upgrade activates automatically across all your devices.</li>
+          </ol>
+        </div>
+
+        <a
+          href={`https://play.google.com/store/apps`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block w-full"
+        >
+          <Button variant="primary" className="w-full">
+            Open Google Play
+          </Button>
+        </a>
+
+        <p className="text-center text-xs text-foreground-muted">
+          Already subscribed?{" "}
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-accent underline underline-offset-2"
+          >
+            Restore purchases
+          </button>{" "}
+          from the Manage subscription section below.
+        </p>
+      </div>
+    </Modal>
+  );
+}
+
 function PlanCard({
   plan,
   billing,
@@ -147,6 +202,7 @@ function PlanCard({
   billing: "monthly" | "annual";
   current: boolean;
 }) {
+  const [showModal, setShowModal] = useState(false);
   const price =
     billing === "annual" ? plan.price_annual : plan.price_monthly;
   const isPaid = plan.id !== "free";
@@ -199,12 +255,20 @@ function PlanCard({
           <Button
             variant={plan.id === "plus_personal" ? "primary" : "secondary"}
             className="w-full"
-            onClick={() => alert("Google Play Billing — coming in Phase 2.")}
+            onClick={() => setShowModal(true)}
           >
             {isPaid ? `Upgrade to ${plan.name}` : "Current plan"}
           </Button>
         )}
       </div>
+
+      {showModal && (
+        <UpgradeModal
+          plan={plan}
+          price={price}
+          onClose={() => setShowModal(false)}
+        />
+      )}
     </div>
   );
 }
@@ -320,20 +384,26 @@ export default function PlusPage() {
       <Card>
         <CardTitle>Manage your subscription</CardTitle>
         <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-          <Button
-            variant="secondary"
+          <a
+            href="https://play.google.com/store/account/subscriptions"
+            target="_blank"
+            rel="noopener noreferrer"
             className="flex-1"
-            onClick={() => alert("Restore Purchases — coming in Phase 2 with Google Play Billing.")}
           >
-            Restore Purchases
-          </Button>
-          <Button
-            variant="ghost"
+            <Button variant="secondary" className="w-full">
+              Restore Purchases
+            </Button>
+          </a>
+          <a
+            href="https://play.google.com/store/account/subscriptions"
+            target="_blank"
+            rel="noopener noreferrer"
             className="flex-1"
-            onClick={() => alert("Opens Google Play subscription management.")}
           >
-            Manage Subscription
-          </Button>
+            <Button variant="ghost" className="w-full">
+              Manage Subscription
+            </Button>
+          </a>
         </div>
       </Card>
 
