@@ -89,6 +89,15 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     async function hydrate() {
       try {
+        // Migrate from old key if new key doesn't exist yet
+        const legacyRaw = localStorage.getItem("dueviq:snapshot:v1");
+        if (legacyRaw && !localStorage.getItem(STORAGE_KEY)) {
+          localStorage.setItem(STORAGE_KEY, legacyRaw);
+          const legacyMode = localStorage.getItem("dueviq:mode");
+          if (legacyMode) localStorage.setItem(MODE_KEY, legacyMode);
+          localStorage.removeItem("dueviq:snapshot:v1");
+          localStorage.removeItem("dueviq:mode");
+        }
         const raw = localStorage.getItem(STORAGE_KEY);
         const storedMode = (localStorage.getItem(MODE_KEY) as Mode) || "fresh";
         let snap: UserSnapshot;

@@ -39,7 +39,7 @@ export function ConsentBanner() {
       <div className="mx-auto max-w-xl rounded-2xl bg-surface border border-border shadow-lg p-5">
         <p className="text-sm font-semibold mb-1">Before you continue</p>
         <p className="text-sm text-foreground-muted leading-relaxed">
-          MoneyNest stores your financial data locally and, if you sign in, via{" "}
+          Dueviq stores your financial data locally and, if you sign in, via{" "}
           <strong className="text-foreground">Supabase</strong> (authentication &amp; database). If you
           link a bank account, your data passes through{" "}
           <strong className="text-foreground">Plaid</strong> (read-only). We do not sell your data

@@ -53,7 +53,7 @@ export default function SettingsPage() {
     const perm = await Notification.requestPermission();
     setNotifPermission(perm);
     if (perm === "granted") {
-      new Notification("MoneyNest reminders enabled", {
+      new Notification("Dueviq reminders enabled", {
         body: "You'll be notified about upcoming bills and renewals.",
         icon: "/icon.svg",
       });
@@ -73,7 +73,7 @@ export default function SettingsPage() {
     <div className="flex flex-col gap-6">
       <header>
         <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
-        <p className="text-sm text-foreground-muted">Make MoneyNest feel like yours.</p>
+        <p className="text-sm text-foreground-muted">Make Dueviq feel like yours.</p>
       </header>
 
       <Card>
@@ -324,7 +324,7 @@ export default function SettingsPage() {
             onClick={() => {
               if (
                 confirm(
-                  "Reset MoneyNest and clear all local data? This cannot be undone.",
+                  "Reset Dueviq and clear all local data? This cannot be undone.",
                 )
               ) {
                 reset("fresh");
@@ -341,7 +341,7 @@ export default function SettingsPage() {
         <CardTitle>Privacy &amp; Legal</CardTitle>
         <div className="mt-3 space-y-2">
           <p className="text-sm text-foreground-muted leading-relaxed">
-            MoneyNest uses <strong className="text-foreground">Supabase</strong> for authentication
+            Dueviq uses <strong className="text-foreground">Supabase</strong> for authentication
             and cloud storage, and <strong className="text-foreground">Plaid</strong> for optional
             bank account linking (read-only). We do not sell your data or run advertising.
           </p>

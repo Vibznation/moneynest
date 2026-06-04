@@ -1,6 +1,6 @@
 {
-  "name": "MoneyNest: Simple Money Organizer",
-  "short_name": "MoneyNest",
+  "name": "Dueviq: Simple Money Organizer",
+  "short_name": "Dueviq",
   "description": "Know what's due. Know what's safe to spend.",
   "start_url": "/",
   "display": "standalone",

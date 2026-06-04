@@ -12,9 +12,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="mx-auto max-w-5xl px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
           <Link href="/today" className="flex items-center gap-2">
             <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-accent text-white font-bold text-xs">
-              M
+              D
             </span>
-            <span className="font-semibold tracking-tight">MoneyNest</span>
+            <span className="font-semibold tracking-tight">Dueviq</span>
           </Link>
           <DesktopNav />
           <div className="flex items-center gap-2">
