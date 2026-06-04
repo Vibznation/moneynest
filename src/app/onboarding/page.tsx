@@ -60,6 +60,15 @@ export default function OnboardingPage() {
 
   const finish = () => {
     updateProfile({ onboarding_complete: true });
+    // Write directly to localStorage so the app layout guard sees it immediately
+    try {
+      const raw = localStorage.getItem("moneynest:snapshot:v1");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        parsed.profile = { ...(parsed.profile ?? {}), onboarding_complete: true };
+        localStorage.setItem("moneynest:snapshot:v1", JSON.stringify(parsed));
+      }
+    } catch {}
     router.replace("/today");
   };
 
@@ -74,6 +83,14 @@ export default function OnboardingPage() {
               <button
                 onClick={() => {
                   updateProfile({ onboarding_complete: true });
+                  try {
+                    const raw = localStorage.getItem("moneynest:snapshot:v1");
+                    if (raw) {
+                      const parsed = JSON.parse(raw);
+                      parsed.profile = { ...(parsed.profile ?? {}), onboarding_complete: true };
+                      localStorage.setItem("moneynest:snapshot:v1", JSON.stringify(parsed));
+                    }
+                  } catch {}
                   router.replace("/today");
                 }}
                 className="hover:text-foreground"
