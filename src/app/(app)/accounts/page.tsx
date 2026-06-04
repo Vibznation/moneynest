@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
 import {
   Plus,
@@ -55,6 +55,43 @@ export default function AccountsPage() {
   const [editing, setEditing] = useState<FinancialAccount | null>(null);
   const [plaidToken, setPlaidToken] = useState<string | null>(null);
   const [plaidStatus, setPlaidStatus] = useState<"idle" | "loading" | "error">("idle");
+  const [syncing, setSyncing] = useState(false);
+  const [syncMsg, setSyncMsg] = useState<string | null>(null);
+
+  const connectedItemIds = useMemo(
+    () => [
+      ...new Set(
+        accounts
+          .filter((a) => a.source === "plaid" && a.plaid_item_id)
+          .map((a) => a.plaid_item_id as string),
+      ),
+    ],
+    [accounts],
+  );
+
+  async function syncAllBalances() {
+    if (connectedItemIds.length === 0) return;
+    setSyncing(true);
+    setSyncMsg(null);
+    try {
+      await Promise.all(
+        connectedItemIds.map((id) =>
+          fetch("/api/plaid/sync-balances", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ plaid_item_id: id }),
+          }),
+        ),
+      );
+      await reloadFinancialAccounts();
+      setSyncMsg("Balances updated.");
+    } catch {
+      setSyncMsg("Sync failed. Try again.");
+    } finally {
+      setSyncing(false);
+      setTimeout(() => setSyncMsg(null), 4000);
+    }
+  }
 
   async function fetchPlaidToken() {
     setPlaidStatus("loading");
@@ -166,6 +203,23 @@ export default function AccountsPage() {
         <p className="text-xs text-danger">
           Could not connect to Plaid. Make sure PLAID_CLIENT_ID, PLAID_SECRET, and PLAID_ENV are set in .env.local.
         </p>
+      )}
+
+      {/* Sync connected accounts */}
+      {connectedItemIds.length > 0 && (
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            disabled={syncing}
+            onClick={syncAllBalances}
+          >
+            <RefreshCw size={14} className={syncing ? "animate-spin" : ""} />
+            {syncing ? "Syncing…" : "Sync balances"}
+          </Button>
+          {syncMsg && (
+            <span className="text-xs text-foreground-muted">{syncMsg}</span>
+          )}
+        </div>
       )}
 
       {/* Privacy note */}
