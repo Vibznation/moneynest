@@ -87,7 +87,7 @@ const PREMIUM_MODULES = [
     description:
       "Organize tax-related expenses and export reports for tax preparation. Electronic filing not included.",
     plan: "business" as EntitlementType,
-    href: "/plus/feature/tax_organizer",
+    href: "/tax-organizer",
   },
   {
     id: "business_workspace",
@@ -96,7 +96,7 @@ const PREMIUM_MODULES = [
     description:
       "Separate business income and expenses with exportable summaries and invoice tracking.",
     plan: "business" as EntitlementType,
-    href: "/plus/feature/business_workspace",
+    href: "/business-workspace",
   },
 ];
 
