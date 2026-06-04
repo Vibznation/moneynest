@@ -17,6 +17,7 @@ import {
   BellRing,
 } from "lucide-react";
 import { useData } from "@/lib/data-store";
+import { getUserEntitlement } from "@/lib/entitlements";
 import {
   calculateCalmScore,
   calculateSafeToSpend,
@@ -314,6 +315,9 @@ export default function TodayPage() {
       {/* Before You Spend */}
       <BeforeYouSpend />
 
+      {/* Dueviq+ soft upsell — only shown for free users */}
+      <DueviqPlusCard />
+
       {/* Quick add */}
       <div className="grid gap-3 sm:grid-cols-3">
         <QuickAdd href="/bills" icon={<Wallet size={16} />} label="Add a bill" />
@@ -462,5 +466,30 @@ function BeforeYouSpend() {
         </p>
       )}
     </Card>
+  );
+}
+
+function DueviqPlusCard() {
+  const entitlement = getUserEntitlement();
+  if (entitlement !== "free") return null;
+
+  return (
+    <Link
+      href="/plus"
+      className="group flex items-center gap-4 rounded-2xl border border-border bg-surface px-4 py-3 hover:border-accent transition-colors"
+    >
+      <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent">
+        <Sparkles size={18} />
+      </span>
+      <div className="flex-1 min-w-0">
+        <p className="font-medium text-foreground group-hover:text-accent transition-colors">
+          Explore Dueviq+
+        </p>
+        <p className="text-xs text-foreground-muted mt-0.5">
+          Spending insights, portfolio, reports and more.
+        </p>
+      </div>
+      <ArrowRight size={16} className="shrink-0 text-foreground-muted group-hover:text-accent transition-colors" />
+    </Link>
   );
 }

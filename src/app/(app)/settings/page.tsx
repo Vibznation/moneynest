@@ -11,6 +11,7 @@ import { useTheme } from "@/components/theme/ThemeProvider";
 import { FREQUENCIES } from "@/lib/constants";
 import { isSupabaseConfigured, getSupabaseBrowser } from "@/lib/supabase/client";
 import type { IncomeFrequency } from "@/types/domain";
+import { getUserEntitlement } from "@/lib/entitlements";
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -337,6 +338,9 @@ export default function SettingsPage() {
         </div>
       </Card>
 
+      {/* Dueviq+ entry point */}
+      <DueviqPlusSettingsCard />
+
       <Card>
         <CardTitle>Privacy &amp; Legal</CardTitle>
         <div className="mt-3 space-y-2">
@@ -354,5 +358,62 @@ export default function SettingsPage() {
         </div>
       </Card>
     </div>
+  );
+}
+
+function DueviqPlusSettingsCard() {
+  const entitlement = getUserEntitlement();
+  const planLabel =
+    entitlement === "free"
+      ? "Dueviq Basic · Free"
+      : entitlement === "plus_personal"
+        ? "Dueviq+ Personal"
+        : "Dueviq Business";
+
+  return (
+    <Link
+      href="/plus"
+      className="group flex items-center justify-between rounded-2xl border border-border bg-surface p-4 hover:border-accent transition-colors"
+    >
+      <div className="flex items-center gap-3">
+        <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+          </svg>
+        </span>
+        <div>
+          <p className="font-medium text-foreground group-hover:text-accent transition-colors">
+            Dueviq+
+          </p>
+          <p className="text-xs text-foreground-muted">{planLabel}</p>
+        </div>
+      </div>
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="shrink-0 text-foreground-muted group-hover:text-accent transition-colors"
+        aria-hidden="true"
+      >
+        <path d="m9 18 6-6-6-6" />
+      </svg>
+    </Link>
   );
 }

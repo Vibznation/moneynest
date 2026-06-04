@@ -196,3 +196,213 @@ drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- DUEVIQ+ PREMIUM TABLES
+-- Phase 2: populated by Google Play Billing webhook / server-side validation.
+-- The browser client may read these tables (to gate UI), but MUST NOT write to
+-- them directly. All writes happen server-side after purchase verification.
+-- ─────────────────────────────────────────────────────────────────────────────
+
+-- user_subscriptions ---------------------------------------------------
+-- Tracks active/inactive in-app purchases per user.
+-- privacy: billing data is minimal; no card numbers; managed by Google Play.
+-- compliance: purchase_token must be validated server-side before granting access.
+create table if not exists public.user_subscriptions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  plan_type text not null check (plan_type in ('free','plus_personal','business')),
+  product_id text not null,         -- e.g. dueviq_plus_monthly
+  purchase_token text,              -- Google Play purchase token (server-side only)
+  platform text not null default 'google_play' check (platform in ('google_play','stripe','promo')),
+  status text not null default 'active' check (status in ('active','expired','cancelled','paused','refunded')),
+  start_date timestamptz not null default now(),
+  renewal_date timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create index if not exists user_subs_user_idx on public.user_subscriptions(user_id);
+create index if not exists user_subs_status_idx on public.user_subscriptions(status);
+
+-- entitlements ---------------------------------------------------------
+-- Derived entitlement state for UI gating. Server writes this after verifying
+-- purchase_token. Browser reads it to know which features to unlock.
+create table if not exists public.entitlements (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  entitlement_type text not null check (entitlement_type in ('free','plus_personal','business')),
+  active boolean not null default true,
+  expires_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create unique index if not exists entitlements_user_uniq on public.entitlements(user_id);
+create index if not exists entitlements_active_idx on public.entitlements(user_id, active);
+
+-- investment_accounts --------------------------------------------------
+-- Tracks investment brokerage / retirement accounts linked via Plaid or manual.
+-- privacy: balances are financial data — RLS enforced, never exposed server-wide.
+-- compliance: tracking only; no trade execution; not a broker-dealer.
+create table if not exists public.investment_accounts (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  name text not null,
+  institution_name text,
+  account_type text not null check (account_type in ('brokerage','ira','401k','roth_ira','crypto_wallet','other')),
+  balance numeric(14,2) not null default 0,
+  currency text not null default 'USD',
+  source text not null default 'manual' check (source in ('manual','plaid')),
+  plaid_account_id text,
+  last_synced_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create index if not exists inv_accounts_user_idx on public.investment_accounts(user_id);
+
+-- holdings -------------------------------------------------------------
+-- Individual positions (stocks, ETFs, crypto) within investment accounts.
+-- compliance: display only; no trading, no price advice, no recommendations.
+create table if not exists public.holdings (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  investment_account_id uuid not null references public.investment_accounts(id) on delete cascade,
+  symbol text not null,
+  name text,
+  quantity numeric(20,8) not null default 0,
+  cost_basis numeric(14,4),
+  current_price numeric(14,4),
+  current_value numeric(14,2),
+  asset_type text not null default 'stock' check (asset_type in ('stock','etf','mutual_fund','crypto','bond','other')),
+  last_updated_at timestamptz,
+  created_at timestamptz not null default now()
+);
+create index if not exists holdings_user_idx on public.holdings(user_id);
+create index if not exists holdings_account_idx on public.holdings(investment_account_id);
+
+-- watchlist_items ------------------------------------------------------
+-- Simple price watchlist. No trade functionality.
+create table if not exists public.watchlist_items (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  symbol text not null,
+  name text,
+  asset_type text not null default 'stock' check (asset_type in ('stock','etf','crypto','other')),
+  alert_price numeric(14,4),
+  notes text,
+  created_at timestamptz not null default now()
+);
+create unique index if not exists watchlist_user_symbol_uniq on public.watchlist_items(user_id, symbol);
+
+-- business_workspaces --------------------------------------------------
+-- Separate workspace for business income/expense tracking.
+-- privacy: kept strictly separate from personal data at the app layer.
+-- compliance: tracking only; not a full accounting platform; no bookkeeping guarantee.
+create table if not exists public.business_workspaces (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  name text not null,
+  business_type text,
+  currency text not null default 'USD',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create unique index if not exists biz_workspace_user_uniq on public.business_workspaces(user_id);
+
+-- business_transactions ------------------------------------------------
+create table if not exists public.business_transactions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  workspace_id uuid not null references public.business_workspaces(id) on delete cascade,
+  name text not null,
+  amount numeric(14,2) not null,
+  type text not null check (type in ('income','expense')),
+  category text,
+  transaction_date date not null,
+  tax_relevant boolean not null default false,
+  deduction_category text,        -- e.g. "office_supplies", "travel"
+  receipt_url text,               -- storage path for receipt image
+  invoice_id uuid,                -- FK added below after invoices table
+  notes text,
+  created_at timestamptz not null default now()
+);
+create index if not exists biz_tx_user_idx on public.business_transactions(user_id);
+create index if not exists biz_tx_workspace_idx on public.business_transactions(workspace_id);
+create index if not exists biz_tx_date_idx on public.business_transactions(transaction_date);
+create index if not exists biz_tx_tax_idx on public.business_transactions(user_id, tax_relevant) where tax_relevant = true;
+
+-- invoices -------------------------------------------------------------
+-- Simple invoice tracker. Not a payment processor; no money movement.
+create table if not exists public.invoices (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  workspace_id uuid not null references public.business_workspaces(id) on delete cascade,
+  invoice_number text,
+  client_name text not null,
+  amount numeric(14,2) not null check (amount >= 0),
+  currency text not null default 'USD',
+  issue_date date not null,
+  due_date date,
+  status text not null default 'draft' check (status in ('draft','sent','paid','overdue','void')),
+  notes text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create index if not exists invoices_user_idx on public.invoices(user_id);
+create index if not exists invoices_workspace_idx on public.invoices(workspace_id);
+
+-- Add FK from business_transactions to invoices (after both tables exist)
+alter table public.business_transactions
+  add constraint if not exists biz_tx_invoice_fk
+  foreign key (invoice_id) references public.invoices(id) on delete set null;
+
+-- reports --------------------------------------------------------------
+-- Stored generated report metadata (PDF/CSV stored in Supabase Storage).
+-- privacy: reports contain financial summaries; access_url should be short-lived signed URL.
+create table if not exists public.reports (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  report_type text not null check (report_type in ('monthly_summary','annual_summary','tax_export','business_pl','custom')),
+  period_start date not null,
+  period_end date not null,
+  storage_path text not null,     -- Supabase Storage object path
+  format text not null default 'pdf' check (format in ('pdf','csv')),
+  generated_at timestamptz not null default now()
+);
+create index if not exists reports_user_idx on public.reports(user_id);
+create index if not exists reports_type_idx on public.reports(user_id, report_type);
+
+-- RLS for new tables ---------------------------------------------------
+alter table public.user_subscriptions enable row level security;
+alter table public.entitlements enable row level security;
+alter table public.investment_accounts enable row level security;
+alter table public.holdings enable row level security;
+alter table public.watchlist_items enable row level security;
+alter table public.business_workspaces enable row level security;
+alter table public.business_transactions enable row level security;
+alter table public.invoices enable row level security;
+alter table public.reports enable row level security;
+
+-- RLS: entitlements — read-only for browser; server writes via service_role
+create policy "entitlements_select_own" on public.entitlements for select using (auth.uid() = user_id);
+-- No insert/update/delete policies for browser — server-side only via service_role key
+
+-- RLS: user_subscriptions — read-only for browser
+create policy "user_subs_select_own" on public.user_subscriptions for select using (auth.uid() = user_id);
+
+-- Generic per-user RLS for the remaining premium tables
+do $$
+declare t text;
+begin
+  foreach t in array array[
+    'investment_accounts','holdings','watchlist_items',
+    'business_workspaces','business_transactions','invoices','reports'
+  ]
+  loop
+    execute format('create policy "%1$s_select_own" on public.%1$s for select using (auth.uid() = user_id);', t);
+    execute format('create policy "%1$s_insert_own" on public.%1$s for insert with check (auth.uid() = user_id);', t);
+    execute format('create policy "%1$s_update_own" on public.%1$s for update using (auth.uid() = user_id);', t);
+    execute format('create policy "%1$s_delete_own" on public.%1$s for delete using (auth.uid() = user_id);', t);
+  end loop;
+exception when duplicate_object then null;
+end $$;
+
