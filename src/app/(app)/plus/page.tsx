@@ -33,6 +33,7 @@ const PREMIUM_MODULES = [
     description:
       "Understand where your money is going with deeper monthly patterns and spending trends.",
     plan: "plus_personal" as EntitlementType,
+    href: "/spending-insights",
   },
   {
     id: "portfolio_summary",
@@ -41,6 +42,7 @@ const PREMIUM_MODULES = [
     description:
       "Track connected investment accounts and view balances, holdings, and portfolio changes.",
     plan: "plus_personal" as EntitlementType,
+    href: "/portfolio",
   },
   {
     id: "crypto_tracking",
@@ -49,6 +51,7 @@ const PREMIUM_MODULES = [
     description:
       "Follow your cryptocurrency holdings and value in one simple view.",
     plan: "plus_personal" as EntitlementType,
+    href: "/crypto",
   },
   {
     id: "stock_charts",
@@ -57,6 +60,7 @@ const PREMIUM_MODULES = [
     description:
       "View stock charts and keep a simple watchlist without placing trades.",
     plan: "plus_personal" as EntitlementType,
+    href: "/market-watch",
   },
   {
     id: "monthly_reports",
@@ -65,6 +69,7 @@ const PREMIUM_MODULES = [
     description:
       "Download clear monthly summaries of income, spending, bills, goals, and balances.",
     plan: "plus_personal" as EntitlementType,
+    href: "/reports",
   },
   {
     id: "debt_planner",
@@ -73,6 +78,7 @@ const PREMIUM_MODULES = [
     description:
       "Compare payoff strategies and track payment progress. No loans or credit applications.",
     plan: "plus_personal" as EntitlementType,
+    href: "/debt-planner",
   },
   {
     id: "tax_organizer",
@@ -81,6 +87,7 @@ const PREMIUM_MODULES = [
     description:
       "Organize tax-related expenses and export reports for tax preparation. Electronic filing not included.",
     plan: "business" as EntitlementType,
+    href: "/plus/feature/tax_organizer",
   },
   {
     id: "business_workspace",
@@ -89,6 +96,7 @@ const PREMIUM_MODULES = [
     description:
       "Separate business income and expenses with exportable summaries and invoice tracking.",
     plan: "business" as EntitlementType,
+    href: "/plus/feature/business_workspace",
   },
 ];
 
@@ -214,7 +222,7 @@ function ModuleCard({
 
   return (
     <Link
-      href={`/plus/feature/${mod.id}`}
+      href={mod.href}
       className="group flex items-start gap-4 rounded-2xl border border-border bg-surface p-4 hover:border-accent transition-colors"
     >
       <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent">
