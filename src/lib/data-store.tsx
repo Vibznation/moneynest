@@ -234,7 +234,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             updated_at: new Date().toISOString(),
           },
         }));
-        if (isSupabaseConfigured() && userId !== "local-user") {
+        if (isSupabaseConfigured() && userId !== "local-user" && userId !== "demo-user") {
           const supabase = getSupabaseBrowser();
           try { await supabase.from("accounts").update({ ...patch, updated_at: new Date().toISOString() }).eq("user_id", userId); } catch { /* ignore */ }
         }
@@ -244,7 +244,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
           ...s,
           settings: { ...(s.settings as Settings), ...patch },
         }));
-        if (isSupabaseConfigured() && userId !== "local-user") {
+        if (isSupabaseConfigured() && userId !== "local-user" && userId !== "demo-user") {
           const supabase = getSupabaseBrowser();
           try { await supabase.from("settings").update(patch).eq("user_id", userId); } catch { /* ignore */ }
         }
@@ -254,7 +254,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
           ...s,
           profile: { ...(s.profile as Profile), ...patch },
         }));
-        if (isSupabaseConfigured() && userId !== "local-user") {
+        if (isSupabaseConfigured() && userId !== "local-user" && userId !== "demo-user") {
           const supabase = getSupabaseBrowser();
           try { await supabase.from("profiles").update(patch).eq("id", userId); } catch { /* ignore */ }
         }
@@ -271,7 +271,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
           ...s,
           income: [...s.income, incomeItem],
         }));
-        if (isSupabaseConfigured() && userId && userId !== "local-user") {
+        if (isSupabaseConfigured() && userId && userId !== "local-user" && userId !== "demo-user") {
           try {
             const supabase = getSupabaseBrowser();
             const { error } = await supabase.from("income").insert([incomeItem]);
@@ -291,7 +291,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
           ...s,
           income: s.income.map((i) => (i.id === id ? { ...i, ...patch } : i)),
         }));
-        if (isSupabaseConfigured() && userId && userId !== "local-user") {
+        if (isSupabaseConfigured() && userId && userId !== "local-user" && userId !== "demo-user") {
           try {
             const supabase = getSupabaseBrowser();
             const { error } = await supabase
@@ -316,7 +316,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
           ...s,
           income: s.income.filter((i) => i.id !== id),
         }));
-        if (isSupabaseConfigured() && userId && userId !== "local-user") {
+        if (isSupabaseConfigured() && userId && userId !== "local-user" && userId !== "demo-user") {
           try {
             const supabase = getSupabaseBrowser();
             const { error } = await supabase.from("income").delete().eq("id", id);
@@ -336,7 +336,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         const now = new Date().toISOString();
         const bill = { ...input, id: uid(), user_id: userId, created_at: now };
         setSnapshot((s) => ({ ...s, bills: [...s.bills, bill] }));
-        if (isSupabaseConfigured() && userId !== "local-user") {
+        if (isSupabaseConfigured() && userId !== "local-user" && userId !== "demo-user") {
           try {
             const supabase = getSupabaseBrowser();
             const { error } = await supabase.from("bills").insert([bill]);
@@ -349,7 +349,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       updateBill: async (id, patch) => {
         const prev = snapshot.bills.find((b) => b.id === id);
         setSnapshot((s) => ({ ...s, bills: s.bills.map((b) => (b.id === id ? { ...b, ...patch } : b)) }));
-        if (isSupabaseConfigured() && userId !== "local-user") {
+        if (isSupabaseConfigured() && userId !== "local-user" && userId !== "demo-user") {
           try {
             const supabase = getSupabaseBrowser();
             const { error } = await supabase.from("bills").update(patch).eq("id", id);
@@ -362,7 +362,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       deleteBill: async (id) => {
         const prev = snapshot.bills.find((b) => b.id === id);
         setSnapshot((s) => ({ ...s, bills: s.bills.filter((b) => b.id !== id) }));
-        if (isSupabaseConfigured() && userId !== "local-user") {
+        if (isSupabaseConfigured() && userId !== "local-user" && userId !== "demo-user") {
           try {
             const supabase = getSupabaseBrowser();
             const { error } = await supabase.from("bills").delete().eq("id", id);
@@ -376,7 +376,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         const now = new Date().toISOString();
         const sub = { ...input, id: uid(), user_id: userId, created_at: now };
         setSnapshot((s) => ({ ...s, subscriptions: [...s.subscriptions, sub] }));
-        if (isSupabaseConfigured() && userId !== "local-user") {
+        if (isSupabaseConfigured() && userId !== "local-user" && userId !== "demo-user") {
           try {
             const supabase = getSupabaseBrowser();
             const { error } = await supabase.from("subscriptions").insert([sub]);
@@ -389,7 +389,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       updateSubscription: async (id, patch) => {
         const prev = snapshot.subscriptions.find((x) => x.id === id);
         setSnapshot((s) => ({ ...s, subscriptions: s.subscriptions.map((x) => (x.id === id ? { ...x, ...patch } : x)) }));
-        if (isSupabaseConfigured() && userId !== "local-user") {
+        if (isSupabaseConfigured() && userId !== "local-user" && userId !== "demo-user") {
           try {
             const supabase = getSupabaseBrowser();
             const { error } = await supabase.from("subscriptions").update(patch).eq("id", id);
@@ -402,7 +402,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       deleteSubscription: async (id) => {
         const prev = snapshot.subscriptions.find((x) => x.id === id);
         setSnapshot((s) => ({ ...s, subscriptions: s.subscriptions.filter((x) => x.id !== id) }));
-        if (isSupabaseConfigured() && userId !== "local-user") {
+        if (isSupabaseConfigured() && userId !== "local-user" && userId !== "demo-user") {
           try {
             const supabase = getSupabaseBrowser();
             const { error } = await supabase.from("subscriptions").delete().eq("id", id);
@@ -416,7 +416,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         const now = new Date().toISOString();
         const goal = { ...input, id: uid(), user_id: userId, created_at: now };
         setSnapshot((s) => ({ ...s, goals: [...s.goals, goal] }));
-        if (isSupabaseConfigured() && userId !== "local-user") {
+        if (isSupabaseConfigured() && userId !== "local-user" && userId !== "demo-user") {
           try {
             const supabase = getSupabaseBrowser();
             const { error } = await supabase.from("goals").insert([goal]);
@@ -429,7 +429,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       updateGoal: async (id, patch) => {
         const prev = snapshot.goals.find((g) => g.id === id);
         setSnapshot((s) => ({ ...s, goals: s.goals.map((g) => (g.id === id ? { ...g, ...patch } : g)) }));
-        if (isSupabaseConfigured() && userId !== "local-user") {
+        if (isSupabaseConfigured() && userId !== "local-user" && userId !== "demo-user") {
           try {
             const supabase = getSupabaseBrowser();
             const { error } = await supabase.from("goals").update(patch).eq("id", id);
@@ -442,7 +442,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       deleteGoal: async (id) => {
         const prev = snapshot.goals.find((g) => g.id === id);
         setSnapshot((s) => ({ ...s, goals: s.goals.filter((g) => g.id !== id) }));
-        if (isSupabaseConfigured() && userId !== "local-user") {
+        if (isSupabaseConfigured() && userId !== "local-user" && userId !== "demo-user") {
           try {
             const supabase = getSupabaseBrowser();
             const { error } = await supabase.from("goals").delete().eq("id", id);
@@ -465,7 +465,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
           ...s,
           financial_accounts: [...s.financial_accounts, account],
         }));
-        if (isSupabaseConfigured() && userId && userId !== "local-user") {
+        if (isSupabaseConfigured() && userId && userId !== "local-user" && userId !== "demo-user") {
           try {
             const supabase = getSupabaseBrowser();
             const { error } = await supabase.from("financial_accounts").insert([account]);
@@ -489,7 +489,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
               : a,
           ),
         }));
-        if (isSupabaseConfigured() && userId && userId !== "local-user") {
+        if (isSupabaseConfigured() && userId && userId !== "local-user" && userId !== "demo-user") {
           try {
             const supabase = getSupabaseBrowser();
             const { error } = await supabase
@@ -514,7 +514,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
           ...s,
           financial_accounts: s.financial_accounts.filter((a) => a.id !== id),
         }));
-        if (isSupabaseConfigured() && userId && userId !== "local-user") {
+        if (isSupabaseConfigured() && userId && userId !== "local-user" && userId !== "demo-user") {
           try {
             const supabase = getSupabaseBrowser();
             const { error } = await supabase.from("financial_accounts").delete().eq("id", id);
@@ -542,7 +542,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
           ...s,
           transactions: [...s.transactions, tx],
         }));
-        if (isSupabaseConfigured() && userId && userId !== "local-user") {
+        if (isSupabaseConfigured() && userId && userId !== "local-user" && userId !== "demo-user") {
           try {
             const supabase = getSupabaseBrowser();
             const { error } = await supabase.from("transactions").insert([tx]);
@@ -564,7 +564,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             t.id === id ? { ...t, ...patch } : t,
           ),
         }));
-        if (isSupabaseConfigured() && userId && userId !== "local-user") {
+        if (isSupabaseConfigured() && userId && userId !== "local-user" && userId !== "demo-user") {
           try {
             const supabase = getSupabaseBrowser();
             const { error } = await supabase
@@ -589,7 +589,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
           ...s,
           transactions: s.transactions.filter((t) => t.id !== id),
         }));
-        if (isSupabaseConfigured() && userId && userId !== "local-user") {
+        if (isSupabaseConfigured() && userId && userId !== "local-user" && userId !== "demo-user") {
           try {
             const supabase = getSupabaseBrowser();
             const { error } = await supabase.from("transactions").delete().eq("id", id);
