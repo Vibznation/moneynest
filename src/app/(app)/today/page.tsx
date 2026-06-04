@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { format } from "date-fns";
 import Link from "next/link";
 import {
@@ -35,6 +35,7 @@ import { Button } from "@/components/ui/Button";
 import { Field, Input } from "@/components/ui/Input";
 import { formatCurrency } from "@/lib/utils";
 import { CalmScoreRing } from "@/components/today/CalmScoreRing";
+import { scheduleBillReminders } from "@/lib/notifications";
 
 export default function TodayPage() {
   const { snapshot, updateBill } = useData();
@@ -52,6 +53,10 @@ export default function TodayPage() {
   );
   const currency = snapshot.settings?.currency ?? "USD";
   const daysToPayday = daysUntil(safe.nextPayday);
+
+  useEffect(() => {
+    scheduleBillReminders(snapshot.bills, currency);
+  }, [snapshot.bills, currency]);
   const firstName =
     snapshot.profile?.name?.trim().split(/\s+/)[0] ?? "there";
 

@@ -5,6 +5,7 @@ import { ThemeScript } from "@/components/theme/ThemeScript";
 import { Providers } from "@/components/Providers";
 import { ServiceWorkerRegistrar } from "@/components/ServiceWorkerRegistrar";
 import { ConsentBanner } from "@/components/ConsentBanner";
+import { PWAInstallBanner } from "@/components/PWAInstallBanner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -45,6 +46,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <ServiceWorkerRegistrar />
         <Providers>{children}</Providers>
+        <PWAInstallBanner />
         <ConsentBanner />
       </body>
     </html>
