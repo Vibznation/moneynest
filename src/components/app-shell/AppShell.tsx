@@ -12,7 +12,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <header className="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
           <Link href="/today" className="flex items-center gap-2">
-            <Image src="/icon-192.png" alt="Dueviq" width={28} height={28} className="rounded-lg" />
+            <Image src="/icon-192.png" alt="Dueviq" width={28} height={28} className="rounded-lg" priority />
             <span className="font-semibold tracking-tight">Dueviq</span>
           </Link>
           <DesktopNav />
