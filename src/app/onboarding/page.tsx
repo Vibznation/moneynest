@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { flushSync } from "react-dom";
 import { addDays, format } from "date-fns";
 import { ArrowRight, Building2, Check, Plus, Sparkles } from "lucide-react";
 import { useData } from "@/lib/data-store";
@@ -58,18 +59,16 @@ export default function OnboardingPage() {
   };
   const skip = next;
 
-  const finish = () => {
-    updateProfile({ onboarding_complete: true });
-    // Write directly to localStorage so the app layout guard sees it immediately
-    try {
-      const raw = localStorage.getItem("moneynest:snapshot:v1");
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        parsed.profile = { ...(parsed.profile ?? {}), onboarding_complete: true };
-        localStorage.setItem("moneynest:snapshot:v1", JSON.stringify(parsed));
-      }
-    } catch {}
+  const completeOnboardingAndOpenApp = () => {
+    // Ensure the onboarding flag is committed before route guards evaluate.
+    flushSync(() => {
+      updateProfile({ onboarding_complete: true });
+    });
     router.replace("/today");
+  };
+
+  const finish = () => {
+    completeOnboardingAndOpenApp();
   };
 
   return (
@@ -82,16 +81,7 @@ export default function OnboardingPage() {
             {step !== "welcome" && step !== "done" ? (
               <button
                 onClick={() => {
-                  updateProfile({ onboarding_complete: true });
-                  try {
-                    const raw = localStorage.getItem("moneynest:snapshot:v1");
-                    if (raw) {
-                      const parsed = JSON.parse(raw);
-                      parsed.profile = { ...(parsed.profile ?? {}), onboarding_complete: true };
-                      localStorage.setItem("moneynest:snapshot:v1", JSON.stringify(parsed));
-                    }
-                  } catch {}
-                  router.replace("/today");
+                  completeOnboardingAndOpenApp();
                 }}
                 className="hover:text-foreground"
               >
@@ -110,7 +100,7 @@ export default function OnboardingPage() {
         {step === "welcome" && (
           <Card className="text-center">
             <div className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-accent-soft">
-              <Sparkles size={20} />
+              <Sparkles size={20} aria-hidden="true" />
             </div>
             <h1 className="mt-4 text-3xl font-semibold tracking-tight">
               Welcome to Dueviq
@@ -129,15 +119,14 @@ export default function OnboardingPage() {
                 }}
                 size="lg"
               >
-              Start Organizing <ArrowRight size={16} />
+                Start fresh <ArrowRight size={16} />
               </Button>
               <Button
                 variant="secondary"
                 size="lg"
                 onClick={() => {
                   reset("demo");
-                  updateProfile({ onboarding_complete: true });
-                  router.replace("/today");
+                  completeOnboardingAndOpenApp();
                 }}
               >
                 Explore with demo data
@@ -172,14 +161,20 @@ export default function OnboardingPage() {
         {step === "done" && (
           <Card className="text-center">
             <div className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-accent-soft">
-              <Check size={20} />
+              <Check size={20} aria-hidden="true" />
             </div>
             <h1 className="mt-4 text-3xl font-semibold tracking-tight">
               You&apos;re all set.
             </h1>
             <p className="mt-2 text-foreground-muted">
-              Dueviq is ready. You can always add more later.
+              MoneyNest is ready. You can always add more later from any page.
             </p>
+            <ul className="mt-4 flex flex-wrap justify-center gap-2 text-xs text-foreground-muted">
+              {snapshot.income.length > 0 && <li className="rounded-full bg-accent-soft px-3 py-1 text-accent font-medium">{snapshot.income.length} income source{snapshot.income.length !== 1 ? "s" : ""}</li>}
+              {snapshot.bills.length > 0 && <li className="rounded-full bg-accent-soft px-3 py-1 text-accent font-medium">{snapshot.bills.length} bill{snapshot.bills.length !== 1 ? "s" : ""}</li>}
+              {snapshot.subscriptions.length > 0 && <li className="rounded-full bg-accent-soft px-3 py-1 text-accent font-medium">{snapshot.subscriptions.length} subscription{snapshot.subscriptions.length !== 1 ? "s" : ""}</li>}
+              {snapshot.goals.length > 0 && <li className="rounded-full bg-accent-soft px-3 py-1 text-accent font-medium">{snapshot.goals.length} goal{snapshot.goals.length !== 1 ? "s" : ""}</li>}
+            </ul>
             <div className="mt-6 flex justify-center">
               <Button onClick={finish} size="lg">
                 Open Dueviq <ArrowRight size={16} />
@@ -684,11 +679,11 @@ function BankStep({
         Dueviq uses Plaid to connect securely. Your credentials are never stored.
       </p>
       <div className="mt-6 grid gap-2 sm:grid-cols-2">
-        <Button onClick={onNext} size="lg">
-          Connect bank <ArrowRight size={16} />
+        <Button onClick={onSkip} size="lg">
+          Skip for now <ArrowRight size={16} />
         </Button>
-        <Button variant="secondary" size="lg" onClick={onSkip}>
-          Skip for now
+        <Button variant="secondary" size="lg" onClick={onNext}>
+          Connect bank
         </Button>
       </div>
     </Card>

@@ -17,14 +17,16 @@ const tabs = [
 export function MobileTabBar() {
   const pathname = usePathname();
   return (
-    <nav className="sm:hidden fixed bottom-0 inset-x-0 z-40 border-t border-border bg-surface/95 backdrop-blur pb-safe">
-      <ul className="grid grid-cols-6">
+    <nav aria-label="Main navigation" className="sm:hidden fixed bottom-0 inset-x-0 z-40 border-t border-border bg-surface/95 backdrop-blur pb-safe">
+      <ul className="grid grid-cols-6" role="list">
         {tabs.map(({ href, label, icon: Icon }) => {
           const active = pathname?.startsWith(href);
           return (
             <li key={href}>
               <Link
                 href={href}
+                aria-label={label}
+                aria-current={active ? "page" : undefined}
                 className={cn(
                   "tap flex flex-col items-center justify-center gap-1 py-2.5 text-[10px] font-medium",
                   active
@@ -33,6 +35,7 @@ export function MobileTabBar() {
                 )}
               >
                 <span
+                  aria-hidden="true"
                   className={cn(
                     "inline-flex h-7 w-10 items-center justify-center rounded-full transition-colors",
                     active ? "bg-accent-soft" : "bg-transparent",
@@ -53,21 +56,22 @@ export function MobileTabBar() {
 export function DesktopNav() {
   const pathname = usePathname();
   return (
-    <nav className="hidden sm:flex items-center gap-1">
+    <nav aria-label="Main navigation" className="hidden sm:flex items-center gap-1">
       {tabs.map(({ href, label, icon: Icon }) => {
         const active = pathname?.startsWith(href);
         return (
           <Link
             key={href}
             href={href}
+            aria-current={active ? "page" : undefined}
             className={cn(
-              "inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium",
+              "inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-info",
               active
                 ? "bg-surface-muted text-foreground"
                 : "text-foreground-muted hover:text-foreground hover:bg-surface-muted",
             )}
           >
-            <Icon size={16} />
+            <Icon size={16} aria-hidden="true" />
             {label === "Subs"
               ? "Subscriptions"
               : label === "Map"

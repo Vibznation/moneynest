@@ -20,14 +20,16 @@ function DonutChart({
   const circ = 2 * Math.PI * r;
   const total = slices.reduce((s, sl) => s + sl.value, 0) || 1;
 
-  let offset = 0;
-  const arcs = slices.map((sl) => {
-    const pct = sl.value / total;
-    const dash = pct * circ;
-    const arc = { ...sl, dash, gap: circ - dash, offset };
-    offset += dash;
-    return arc;
-  });
+  const arcs = slices.reduce<Array<{ value: number; color: string; label: string; dash: number; gap: number; offset: number }>>(
+    (acc, sl) => {
+      const pct = sl.value / total;
+      const dash = pct * circ;
+      const offset = acc.length === 0 ? 0 : acc[acc.length - 1].offset + acc[acc.length - 1].dash;
+      acc.push({ ...sl, dash, gap: circ - dash, offset });
+      return acc;
+    },
+    [],
+  );
 
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>

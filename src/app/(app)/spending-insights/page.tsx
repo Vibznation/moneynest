@@ -97,36 +97,6 @@ function CategoryBar({
   );
 }
 
-// ── Month selector tabs ──────────────────────────────────────────────────────
-
-function MonthTabs({
-  summaries,
-  selected,
-  onSelect,
-}: {
-  summaries: MonthlySummary[];
-  selected: number;
-  onSelect: (i: number) => void;
-}) {
-  return (
-    <div className="flex gap-2 overflow-x-auto pb-1">
-      {summaries.map((s, i) => (
-        <button
-          key={s.label}
-          onClick={() => onSelect(i)}
-          className={`shrink-0 rounded-xl px-3 py-1.5 text-sm font-medium transition-colors ${
-            i === selected
-              ? "bg-accent text-white"
-              : "bg-surface-muted text-foreground-muted hover:text-foreground"
-          }`}
-        >
-          {s.label}
-        </button>
-      ))}
-    </div>
-  );
-}
-
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export default function SpendingInsightsPage() {

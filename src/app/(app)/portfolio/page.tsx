@@ -2,9 +2,8 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
-import { ArrowLeft, Plus, TrendingUp, TrendingDown, Trash2, Building2 } from "lucide-react";
+import { ArrowLeft, Plus, TrendingUp, Trash2, Building2 } from "lucide-react";
 import { Card, CardTitle } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Field, Input } from "@/components/ui/Input";
 import { Progress } from "@/components/ui/Progress";

@@ -22,15 +22,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           return;
         }
       }
-      // Give a brief window after finishing onboarding for the state to settle
-      // by checking localStorage directly as the source of truth
-      const raw = localStorage.getItem("moneynest:snapshot:v1");
-      if (raw) {
-        try {
-          const parsed = JSON.parse(raw);
-          if (parsed?.profile?.onboarding_complete) return;
-        } catch {}
-      }
       if (!snapshot.profile?.onboarding_complete) {
         router.replace("/onboarding");
       }
@@ -40,8 +31,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   if (!ready) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <p className="animate-pulse text-sm text-foreground-muted">Loading Dueviq…</p>
+      <div className="flex min-h-screen items-center justify-center" role="status" aria-label="Loading MoneyNest">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-8 w-8 rounded-full border-2 border-accent border-t-transparent animate-spin" aria-hidden="true" />
+          <p className="text-sm text-foreground-muted">Loading Dueviq…</p>
+        </div>
       </div>
     );
   }

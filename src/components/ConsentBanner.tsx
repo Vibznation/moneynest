@@ -4,14 +4,15 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 
-const CONSENT_KEY = "moneynest:consent:v1";
+const CONSENT_KEY = "dueviq:consent:v1";
+const LEGACY_CONSENT_KEY = "moneynest:consent:v1";
 
 export function ConsentBanner() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     try {
-      const stored = localStorage.getItem(CONSENT_KEY);
+      const stored = localStorage.getItem(CONSENT_KEY) ?? localStorage.getItem(LEGACY_CONSENT_KEY);
       if (!stored) setVisible(true);
     } catch {
       // localStorage unavailable (private mode, etc.) — don't block the user
@@ -21,6 +22,7 @@ export function ConsentBanner() {
   function accept() {
     try {
       localStorage.setItem(CONSENT_KEY, JSON.stringify({ accepted: true, at: new Date().toISOString() }));
+      localStorage.removeItem(LEGACY_CONSENT_KEY);
     } catch {
       // ignore
     }

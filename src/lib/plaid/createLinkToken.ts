@@ -5,7 +5,7 @@ export async function createLinkToken(userId: string): Promise<{ link_token: str
   const client = getPlaidClient();
   const res = await client.linkTokenCreate({
     user: { client_user_id: userId },
-    client_name: "MoneyNest",
+    client_name: "Dueviq",
     products: [Products.Transactions],
     country_codes: [CountryCode.Us],
     language: "en",

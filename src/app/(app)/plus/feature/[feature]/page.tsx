@@ -15,7 +15,6 @@ import {
   Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { cn } from "@/lib/utils";
 
 const FEATURE_META: Record<
   string,

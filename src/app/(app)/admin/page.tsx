@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardTitle } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
 import { type EntitlementType } from "@/lib/entitlements";
 
 const PLANS: { id: EntitlementType; label: string; desc: string }[] = [
@@ -12,13 +12,14 @@ const PLANS: { id: EntitlementType; label: string; desc: string }[] = [
 ];
 
 export default function AdminPage() {
+  const router = useRouter();
   const [current, setCurrent] = useState<string | null>(null);
 
   useEffect(() => {
     setCurrent(localStorage.getItem("dueviq:plan-override") ?? "free");
   }, []);
 
-  function set(plan: EntitlementType) {
+  function setPlan(plan: EntitlementType) {
     if (plan === "free") {
       localStorage.removeItem("dueviq:plan-override");
       setCurrent("free");
@@ -26,8 +27,8 @@ export default function AdminPage() {
       localStorage.setItem("dueviq:plan-override", plan);
       setCurrent(plan);
     }
-    // Force a full reload so all hooks re-read the override
-    window.location.href = "/today";
+    router.replace("/today");
+    router.refresh();
   }
 
   return (
@@ -48,7 +49,7 @@ export default function AdminPage() {
           {PLANS.map((p) => (
             <button
               key={p.id}
-              onClick={() => set(p.id)}
+              onClick={() => setPlan(p.id)}
               className={`text-left rounded-xl border px-4 py-3 transition-colors ${
                 current === p.id
                   ? "border-accent bg-accent-soft"

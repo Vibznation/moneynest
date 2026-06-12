@@ -15,7 +15,7 @@ import {
   Clock,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
-import { Card, CardTitle, CardValue } from "@/components/ui/Card";
+import { Card, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Field, Input } from "@/components/ui/Input";

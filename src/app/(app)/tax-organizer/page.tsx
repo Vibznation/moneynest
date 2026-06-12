@@ -8,7 +8,7 @@ import { useData } from "@/lib/data-store";
 import { Card, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { Field, Input, Select } from "@/components/ui/Input";
+import { Field, Input } from "@/components/ui/Input";
 import { PremiumGate } from "@/components/plus/PremiumGate";
 import { formatCurrency } from "@/lib/utils";
 

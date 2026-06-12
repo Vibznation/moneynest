@@ -15,7 +15,6 @@ import {
   Check,
   ChevronRight,
   ShieldCheck,
-  X,
 } from "lucide-react";
 import { Card, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";

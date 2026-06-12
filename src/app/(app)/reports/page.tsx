@@ -15,6 +15,7 @@ import { Card, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { PremiumGate } from "@/components/plus/PremiumGate";
 import { formatCurrency } from "@/lib/utils";
+import { getMonthlyIncome } from "@/lib/calculations";
 import type { UserSnapshot } from "@/types/domain";
 
 // ── Month picker ─────────────────────────────────────────────────────────────
@@ -42,7 +43,7 @@ function buildReport(snapshot: UserSnapshot, month: string) {
   }
 
   // Income
-  const income = snapshot.income.reduce((s, i) => s + i.amount, 0);
+  const income = getMonthlyIncome(snapshot.income);
 
   // Bills paid this month
   const billsPaid = snapshot.bills.filter(

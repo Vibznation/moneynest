@@ -11,12 +11,15 @@ interface ThemeCtx {
 }
 
 const Ctx = createContext<ThemeCtx | null>(null);
+const THEME_KEY = "dueviq:theme";
+const LEGACY_THEME_KEY = "moneynest-theme";
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>("light");
 
   useEffect(() => {
-    const stored = (localStorage.getItem("moneynest-theme") as Theme | null);
+    const stored = (localStorage.getItem(THEME_KEY) ??
+      localStorage.getItem(LEGACY_THEME_KEY)) as Theme | null;
     const prefers = window.matchMedia("(prefers-color-scheme: dark)").matches;
     const initial: Theme = stored ?? (prefers ? "dark" : "light");
     setThemeState(initial);
@@ -27,7 +30,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     setThemeState(t);
     document.documentElement.classList.toggle("dark", t === "dark");
     try {
-      localStorage.setItem("moneynest-theme", t);
+      localStorage.setItem(THEME_KEY, t);
+      localStorage.removeItem(LEGACY_THEME_KEY);
     } catch {}
   };
 
