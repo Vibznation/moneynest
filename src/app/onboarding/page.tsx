@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { flushSync } from "react-dom";
 import { addDays, format } from "date-fns";
 import { ArrowRight, Building2, Check, Plus, Sparkles } from "lucide-react";
 import { useData } from "@/lib/data-store";
@@ -60,10 +59,18 @@ export default function OnboardingPage() {
   const skip = next;
 
   const completeOnboardingAndOpenApp = () => {
-    // Ensure the onboarding flag is committed before route guards evaluate.
-    flushSync(() => {
-      updateProfile({ onboarding_complete: true });
-    });
+    updateProfile({ onboarding_complete: true });
+    // Write directly to localStorage as a belt-and-suspenders guard against
+    // the async layout guard reading a stale in-memory snapshot.
+    try {
+      const raw = localStorage.getItem("dueviq:snapshot:v1");
+      if (raw) {
+        const snap = JSON.parse(raw);
+        if (snap.profile) snap.profile.onboarding_complete = true;
+        else snap.profile = { onboarding_complete: true };
+        localStorage.setItem("dueviq:snapshot:v1", JSON.stringify(snap));
+      }
+    } catch {}
     router.replace("/today");
   };
 

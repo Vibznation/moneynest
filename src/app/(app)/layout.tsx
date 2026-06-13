@@ -13,20 +13,33 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!ready) return;
+    let cancelled = false;
     async function guard() {
       if (isSupabaseConfigured()) {
         const supabase = getSupabaseBrowser();
         const { data } = await supabase.auth.getSession();
+        if (cancelled) return;
         if (!data.session) {
           router.replace("/auth");
           return;
         }
       }
-      if (!snapshot.profile?.onboarding_complete) {
-        router.replace("/onboarding");
-      }
+      if (cancelled) return;
+      // Check in-memory snapshot first
+      if (snapshot.profile?.onboarding_complete) return;
+      // Fallback: check localStorage in case the in-memory snapshot is stale
+      // (race condition between state update and this async guard running)
+      try {
+        const raw = localStorage.getItem("dueviq:snapshot:v1");
+        if (raw) {
+          const stored = JSON.parse(raw);
+          if (stored?.profile?.onboarding_complete) return;
+        }
+      } catch {}
+      router.replace("/onboarding");
     }
     guard();
+    return () => { cancelled = true; };
   }, [ready, snapshot, router, pathname]);
 
   if (!ready) {
