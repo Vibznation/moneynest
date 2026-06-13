@@ -60,8 +60,8 @@ export default function OnboardingPage() {
 
   const completeOnboardingAndOpenApp = () => {
     updateProfile({ onboarding_complete: true });
-    // Write directly to localStorage as a belt-and-suspenders guard against
-    // the async layout guard reading a stale in-memory snapshot.
+    // Write directly to localStorage so the guard always reads fresh data,
+    // regardless of whether the React state update has committed yet.
     try {
       const raw = localStorage.getItem("dueviq:snapshot:v1");
       if (raw) {
@@ -71,6 +71,9 @@ export default function OnboardingPage() {
         localStorage.setItem("dueviq:snapshot:v1", JSON.stringify(snap));
       }
     } catch {}
+    // sessionStorage flag: survives navigation in the same tab and is
+    // synchronous — the layout guard checks this before reading the snapshot.
+    try { sessionStorage.setItem("dueviq:onboarding-complete", "1"); } catch {}
     router.replace("/today");
   };
 

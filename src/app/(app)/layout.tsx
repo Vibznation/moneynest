@@ -15,6 +15,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     if (!ready) return;
     let cancelled = false;
     async function guard() {
+      // sessionStorage flag set synchronously by the onboarding page before
+      // navigation — clears itself on first check so it only fires once.
+      try {
+        if (sessionStorage.getItem("dueviq:onboarding-complete") === "1") {
+          sessionStorage.removeItem("dueviq:onboarding-complete");
+          return;
+        }
+      } catch {}
+
       if (isSupabaseConfigured()) {
         const supabase = getSupabaseBrowser();
         const { data } = await supabase.auth.getSession();
@@ -28,7 +37,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       // Check in-memory snapshot first
       if (snapshot.profile?.onboarding_complete) return;
       // Fallback: check localStorage in case the in-memory snapshot is stale
-      // (race condition between state update and this async guard running)
       try {
         const raw = localStorage.getItem("dueviq:snapshot:v1");
         if (raw) {
