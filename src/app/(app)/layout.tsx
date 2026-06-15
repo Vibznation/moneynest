@@ -1,14 +1,13 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/app-shell/AppShell";
 import { useData } from "@/lib/data-store";
 import { isSupabaseConfigured, getSupabaseBrowser } from "@/lib/supabase/client";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const pathname = usePathname();
   const { ready, snapshot } = useData();
 
   useEffect(() => {
@@ -48,7 +47,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     }
     guard();
     return () => { cancelled = true; };
-  }, [ready, snapshot, router, pathname]);
+  // NOTE: pathname intentionally excluded — re-running the guard on every tab
+  // change causes a redirect race with the async updateProfile state update.
+  // The guard only needs to fire when readiness or the snapshot changes.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, snapshot]);
 
   if (!ready) {
     return (
