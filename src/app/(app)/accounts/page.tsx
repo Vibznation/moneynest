@@ -58,6 +58,8 @@ export default function AccountsPage() {
   const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState<string | null>(null);
 
+  // usePlaidLink is always mounted (never conditional) so the script is only injected once.
+  // When plaidToken is null we pass an empty string — the hook no-ops safely.
   const { open: openPlaid, ready: plaidReady } = usePlaidLink({
     token: plaidToken ?? "",
     onSuccess: async (public_token: string) => {
@@ -610,5 +612,4 @@ function AccountModal({
   );
 }
 
-// Mounted only when we have a valid token — prevents Plaid script from loading multiple times
 

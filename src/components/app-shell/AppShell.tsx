@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Settings as SettingsIcon } from "lucide-react";
+import { Settings as SettingsIcon, Sparkles } from "lucide-react";
 import { DesktopNav, MobileTabBar } from "@/components/app-shell/Nav";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { ToastRegion } from "@/components/ui/Toast";
@@ -22,6 +22,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <DesktopNav />
           <div className="flex items-center gap-2">
             <ThemeToggle />
+            <Link
+              href="/plus"
+              aria-label="Dueviq+"
+              className="inline-flex items-center gap-1.5 h-9 px-3 rounded-xl border border-border bg-surface text-foreground text-sm font-medium hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-info"
+            >
+              <Sparkles size={14} aria-hidden="true" />
+              <span className="hidden sm:inline">Plus</span>
+            </Link>
             <Link
               href="/settings"
               aria-label="Settings"

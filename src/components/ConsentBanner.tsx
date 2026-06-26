@@ -36,7 +36,7 @@ export function ConsentBanner() {
       role="dialog"
       aria-modal="false"
       aria-label="Privacy consent"
-      className="fixed bottom-0 inset-x-0 z-50 p-4 sm:p-6"
+      className="fixed bottom-16 sm:bottom-0 inset-x-0 z-50 p-4 sm:p-6"
     >
       <div className="mx-auto max-w-xl rounded-2xl bg-surface border border-border shadow-lg p-5">
         <p className="text-sm font-semibold mb-1">Before you continue</p>

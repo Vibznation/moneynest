@@ -18,7 +18,7 @@ export function DataNoticeBanner() {
   if (!notice) return null;
 
   return (
-    <div className="pointer-events-none fixed inset-x-4 bottom-4 z-50 flex justify-center sm:inset-x-auto sm:right-4 sm:left-auto">
+    <div className="pointer-events-none fixed inset-x-4 bottom-20 z-50 flex justify-center sm:inset-x-auto sm:right-4 sm:left-auto sm:bottom-4">
       <div className="pointer-events-auto flex w-full max-w-md items-start gap-3 rounded-2xl border border-danger bg-surface px-4 py-3 shadow-[var(--shadow-soft)]">
         <span className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-danger-soft text-danger">
           <AlertTriangle size={16} />

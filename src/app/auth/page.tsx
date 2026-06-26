@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Sparkles } from "lucide-react";
@@ -18,8 +18,11 @@ export default function AuthPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
+  // Defer env check to client to avoid SSR/client hydration mismatch
+  const [supabaseReady, setSupabaseReady] = useState<boolean | null>(null);
+  useEffect(() => { setSupabaseReady(isSupabaseConfigured()); }, []);
 
-  if (!isSupabaseConfigured()) {
+  if (supabaseReady === false) {
     return (
       <div className="flex min-h-screen items-center justify-center p-6">
         <div className="max-w-sm w-full text-center">
@@ -38,6 +41,8 @@ export default function AuthPage() {
       </div>
     );
   }
+
+  if (supabaseReady === null) return null;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
