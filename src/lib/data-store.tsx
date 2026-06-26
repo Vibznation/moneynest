@@ -103,6 +103,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
               }
               setSnapshot((s) => ({
                 ...s,
+                // Single-object rows: always use Supabase version if present
                 profile: profileRes.data ?? {
                   id: realUid,
                   email: realEmail,
@@ -123,10 +124,15 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
                 },
                 account: accountRes.data ?? s.account,
                 settings: settingsRes.data ?? s.settings,
-                income: Array.isArray(income) ? income : s.income,
-                bills: Array.isArray(bills) ? bills : s.bills,
-                subscriptions: Array.isArray(subs) ? subs : s.subscriptions,
-                goals: Array.isArray(goals) ? goals : s.goals,
+                // Array rows: only replace local cache if Supabase returned records.
+                // If Supabase returns [] it could mean writes silently failed —
+                // keeping local data prevents a refresh from wiping the user's work.
+                income: (Array.isArray(income) && income.length > 0) ? income : s.income,
+                bills: (Array.isArray(bills) && bills.length > 0) ? bills : s.bills,
+                subscriptions: (Array.isArray(subs) && subs.length > 0) ? subs : s.subscriptions,
+                goals: (Array.isArray(goals) && goals.length > 0) ? goals : s.goals,
+                // financial_accounts and transactions are managed via explicit reload
+                // and Plaid sync, so always trust Supabase for those.
                 financial_accounts: Array.isArray(accounts) ? accounts : s.financial_accounts,
                 transactions: Array.isArray(txs) ? txs : s.transactions,
               }));
@@ -159,9 +165,12 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     const supabase = getSupabaseBrowser();
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_OUT") {
-        const demo = buildDemoSnapshot();
-        setSnapshot(demo);
-        setMode("demo");
+        // Clear cloud-user data from local state and storage.
+        // Use emptySnapshot (not demo) so the user lands on onboarding rather
+        // than seeing fake data. localStorage is cleared so a different account
+        // signing in next won't see stale data.
+        setSnapshot(emptySnapshot());
+        setMode("fresh");
         try {
           localStorage.removeItem(STORAGE_KEY);
           localStorage.removeItem(MODE_KEY);
@@ -209,6 +218,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       dismissNotice,
       reset,
       updateAccount: async (patch) => {
+        const prevAccount = snapshot.account;
         setSnapshot((s) => ({
           ...s,
           account: {
@@ -223,30 +233,48 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             updated_at: new Date().toISOString(),
           },
         }));
-        if (isCloudUser) {
-          const supabase = getSupabaseBrowser();
-          try { await supabase.from("accounts").update({ ...patch, updated_at: new Date().toISOString() }).eq("user_id", userId); } catch { /* ignore */ }
-        }
+        await runCloudMutation(
+          async () => {
+            const supabase = getSupabaseBrowser();
+            const { error } = await supabase
+              .from("accounts")
+              .update({ ...patch, updated_at: new Date().toISOString() })
+              .eq("user_id", userId);
+            if (error) throw error;
+          },
+          () => setSnapshot((s) => ({ ...s, account: prevAccount })),
+          "Could not save balance changes. They were reverted.",
+        );
       },
       updateSettings: async (patch) => {
+        const prevSettings = snapshot.settings;
         setSnapshot((s) => ({
           ...s,
           settings: { ...(s.settings as Settings), ...patch },
         }));
-        if (isCloudUser) {
-          const supabase = getSupabaseBrowser();
-          try { await supabase.from("settings").update(patch).eq("user_id", userId); } catch { /* ignore */ }
-        }
+        await runCloudMutation(
+          async () => {
+            const supabase = getSupabaseBrowser();
+            const { error } = await supabase
+              .from("settings")
+              .update(patch)
+              .eq("user_id", userId);
+            if (error) throw error;
+          },
+          () => setSnapshot((s) => ({ ...s, settings: prevSettings })),
+          "Could not save settings. They were reverted.",
+        );
       },
       updateProfile: async (patch) => {
+        const prevProfile = snapshot.profile;
         setSnapshot((s) => ({
           ...s,
           profile: { ...(s.profile as Profile), ...patch },
         }));
-        if (isCloudUser) {
-          const supabase = getSupabaseBrowser();
-          try {
-            await supabase.from("profiles").upsert(
+        await runCloudMutation(
+          async () => {
+            const supabase = getSupabaseBrowser();
+            const { error } = await supabase.from("profiles").upsert(
               {
                 id: userId,
                 email: snapshot.profile?.email ?? null,
@@ -254,8 +282,11 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
               },
               { onConflict: "id" },
             );
-          } catch { /* ignore */ }
-        }
+            if (error) throw error;
+          },
+          () => setSnapshot((s) => ({ ...s, profile: prevProfile })),
+          "Could not save profile. Your changes were reverted.",
+        );
       },
       addIncome: async (input) => {
         const now = new Date().toISOString();
