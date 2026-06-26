@@ -8,6 +8,20 @@ create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   email text,
   name text,
+  -- Extended marketing / contact profile fields
+  phone text,
+  phone_country_code text not null default '+1',
+  date_of_birth date,
+  city text,
+  state text,
+  country text not null default 'US',
+  zip text,
+  gender text check (gender in ('male','female','non_binary','prefer_not_to_say','other')),
+  occupation text,
+  annual_income_range text check (annual_income_range in (
+    'under_25k','25k_50k','50k_75k','75k_100k','100k_150k','over_150k','prefer_not_to_say'
+  )),
+  marketing_source text,
   onboarding_complete boolean not null default false,
   created_at timestamptz not null default now()
 );
@@ -408,4 +422,107 @@ begin
   end loop;
 exception when duplicate_object then null;
 end $$;
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- MARKETING CONSENT TABLES
+-- Granular, versioned, audit-logged consent for email, SMS, and analytics.
+-- All writes from the browser go through the server-side /api/consent route
+-- which uses the service_role key so consent_audit is never writable from the client.
+-- ─────────────────────────────────────────────────────────────────────────────
+
+-- user_consents --------------------------------------------------------
+-- One row per user per consent_type. Upserted on every change.
+-- granted=false means withdrawn — never hard-deleted so history is preserved.
+create table if not exists public.user_consents (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  consent_type text not null check (consent_type in (
+    'privacy_policy', 'terms_of_service',
+    'email_marketing', 'sms_marketing',
+    'analytics', 'personalization'
+  )),
+  granted boolean not null,
+  consent_version text not null default '1.0',
+  consent_text_shown text not null,  -- exact text shown to user at time of consent
+  consent_source text not null check (consent_source in (
+    'onboarding', 'settings', 'banner', 'api'
+  )),
+  ip_address inet,
+  user_agent text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create unique index if not exists user_consents_user_type_uniq
+  on public.user_consents(user_id, consent_type);
+create index if not exists user_consents_user_idx on public.user_consents(user_id);
+
+-- consent_audit --------------------------------------------------------
+-- Append-only audit trail. One row per consent change event.
+-- Never updated or deleted. Browser cannot write — only service_role via API.
+create table if not exists public.consent_audit (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  consent_type text not null,
+  action text not null check (action in ('granted','withdrawn','updated')),
+  granted boolean not null,
+  consent_version text not null,
+  consent_text_shown text not null,
+  consent_source text not null,
+  ip_address inet,
+  user_agent text,
+  recorded_at timestamptz not null default now()
+);
+create index if not exists consent_audit_user_idx on public.consent_audit(user_id);
+create index if not exists consent_audit_type_idx on public.consent_audit(user_id, consent_type);
+
+-- Trigger: auto-insert audit row whenever user_consents is inserted/updated
+create or replace function public.log_consent_audit()
+returns trigger language plpgsql security definer as $$
+declare
+  v_action text;
+begin
+  if TG_OP = 'INSERT' then
+    v_action := case when NEW.granted then 'granted' else 'withdrawn' end;
+  else
+    v_action := case
+      when NEW.granted and not OLD.granted then 'granted'
+      when not NEW.granted and OLD.granted then 'withdrawn'
+      else 'updated'
+    end;
+  end if;
+
+  insert into public.consent_audit (
+    user_id, consent_type, action, granted,
+    consent_version, consent_text_shown, consent_source,
+    ip_address, user_agent
+  ) values (
+    NEW.user_id, NEW.consent_type, v_action, NEW.granted,
+    NEW.consent_version, NEW.consent_text_shown, NEW.consent_source,
+    NEW.ip_address, NEW.user_agent
+  );
+  return NEW;
+end; $$;
+
+drop trigger if exists on_consent_change on public.user_consents;
+create trigger on_consent_change
+  after insert or update on public.user_consents
+  for each row execute function public.log_consent_audit();
+
+-- RLS for consent tables -----------------------------------------------
+alter table public.user_consents enable row level security;
+alter table public.consent_audit enable row level security;
+
+-- user_consents: users can read and write their own rows via the browser.
+-- Withdrawals are done by updating granted=false, not deleting.
+do $$ begin
+  create policy "user_consents_select_own" on public.user_consents for select using (auth.uid() = user_id);
+  create policy "user_consents_insert_own" on public.user_consents for insert with check (auth.uid() = user_id);
+  create policy "user_consents_update_own" on public.user_consents for update using (auth.uid() = user_id);
+exception when duplicate_object then null; end $$;
+
+-- consent_audit: users can read their own audit trail.
+-- No insert/update/delete from browser — written only by the DB trigger (security definer).
+do $$ begin
+  create policy "consent_audit_select_own" on public.consent_audit for select using (auth.uid() = user_id);
+exception when duplicate_object then null; end $$;
 

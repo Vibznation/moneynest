@@ -8,9 +8,9 @@ import { Card, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Field, Input, Select } from "@/components/ui/Input";
 import { useTheme } from "@/components/theme/ThemeProvider";
-import { FREQUENCIES } from "@/lib/constants";
+import { FREQUENCIES, GENDER_OPTIONS, INCOME_RANGE_OPTIONS, MARKETING_SOURCE_OPTIONS } from "@/lib/constants";
 import { isSupabaseConfigured, getSupabaseBrowser } from "@/lib/supabase/client";
-import type { IncomeFrequency } from "@/types/domain";
+import type { AnnualIncomeRange, Gender, IncomeFrequency } from "@/types/domain";
 import { getUserEntitlement } from "@/lib/entitlements";
 
 export default function SettingsPage() {
@@ -34,6 +34,16 @@ export default function SettingsPage() {
 
   const [name, setName] = useState(profile.name ?? "");
   const [email, setEmail] = useState(profile.email ?? "");
+  // Extended profile fields
+  const [phone, setPhone] = useState(profile.phone ?? "");
+  const [city, setCity] = useState(profile.city ?? "");
+  const [state, setStateVal] = useState(profile.state ?? "");
+  const [zip, setZip] = useState(profile.zip ?? "");
+  const [dob, setDob] = useState(profile.date_of_birth ?? "");
+  const [gender, setGender] = useState<Gender | "">(profile.gender ?? "");
+  const [occupation, setOccupation] = useState(profile.occupation ?? "");
+  const [incomeRange, setIncomeRange] = useState<AnnualIncomeRange | "">(profile.annual_income_range ?? "");
+  const [marketingSource, setMarketingSource] = useState(profile.marketing_source ?? "");
   const [cushion, setCushion] = useState(settings.minimum_cushion.toString());
   const [currency, setCurrency] = useState(settings.currency);
   const [payFreq, setPayFreq] = useState<IncomeFrequency>(settings.pay_frequency);
@@ -174,10 +184,66 @@ export default function SettingsPage() {
               onChange={(e) => setEmail(e.target.value)}
             />
           </Field>
+          <Field label="Phone (optional)">
+            <Input
+              type="tel"
+              value={phone}
+              placeholder="+1 555-000-0000"
+              onChange={(e) => setPhone(e.target.value)}
+            />
+          </Field>
+          <Field label="Date of birth (optional)">
+            <Input type="date" value={dob} onChange={(e) => setDob(e.target.value)} />
+          </Field>
+          <Field label="City (optional)">
+            <Input value={city} placeholder="e.g. Austin" onChange={(e) => setCity(e.target.value)} />
+          </Field>
+          <Field label="State / Province (optional)">
+            <Input value={state} placeholder="e.g. TX" onChange={(e) => setStateVal(e.target.value)} />
+          </Field>
+          <Field label="ZIP / Postal code (optional)">
+            <Input value={zip} placeholder="e.g. 78701" onChange={(e) => setZip(e.target.value)} />
+          </Field>
+          <Field label="Gender (optional)">
+            <Select value={gender} onChange={(e) => setGender(e.target.value as Gender | "")}>
+              <option value="">Prefer not to say</option>
+              {GENDER_OPTIONS.map((g) => (
+                <option key={g.value} value={g.value}>{g.label}</option>
+              ))}
+            </Select>
+          </Field>
+          <Field label="Occupation (optional)">
+            <Input value={occupation} placeholder="e.g. Software engineer" onChange={(e) => setOccupation(e.target.value)} />
+          </Field>
+          <Field label="Annual household income (optional)">
+            <Select value={incomeRange} onChange={(e) => setIncomeRange(e.target.value as AnnualIncomeRange | "")}>
+              <option value="">Prefer not to say</option>
+              {INCOME_RANGE_OPTIONS.map((r) => (
+                <option key={r.value} value={r.value}>{r.label}</option>
+              ))}
+            </Select>
+          </Field>
+          <Field label="How did you find Dueviq? (optional)">
+            <Select value={marketingSource} onChange={(e) => setMarketingSource(e.target.value)}>
+              <option value="">Select…</option>
+              {MARKETING_SOURCE_OPTIONS.map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </Select>
+          </Field>
         </div>
         <div className="mt-4 flex justify-end">
           <Button
-            onClick={() => updateProfile({ name, email })}
+            onClick={() =>
+              updateProfile({
+                name, email, phone: phone || null, date_of_birth: dob || null,
+                city: city || null, state: state || null, zip: zip || null,
+                gender: gender ? (gender as Gender) : null,
+                occupation: occupation || null,
+                annual_income_range: incomeRange ? (incomeRange as AnnualIncomeRange) : null,
+                marketing_source: marketingSource || null,
+              })
+            }
             variant="secondary"
           >
             Save profile
@@ -357,6 +423,8 @@ export default function SettingsPage() {
           </Link>
         </div>
       </Card>
+
+      <MarketingConsentCard />
     </div>
   );
 }
@@ -415,5 +483,102 @@ function DueviqPlusSettingsCard() {
         <path d="m9 18 6-6-6-6" />
       </svg>
     </Link>
+  );
+}
+
+// ─── Privacy & Marketing consent card ────────────────────────────────────────
+
+type ConsentEntry = { granted: boolean; updatedAt: string; version: string };
+type ConsentMap = Record<string, ConsentEntry>;
+
+const MARKETING_CONSENT_TYPES = [
+  { key: "email_marketing", label: "Marketing emails", description: "Product updates, tips, and offers via email." },
+  { key: "sms_marketing", label: "Marketing SMS", description: "Promotional texts. Reply STOP to opt out anytime." },
+  { key: "analytics", label: "Usage analytics", description: "Anonymised data to help us improve the app." },
+  { key: "personalization", label: "Personalisation", description: "Content and tips based on your usage." },
+] as const;
+
+function MarketingConsentCard() {
+  const [consents, setConsents] = useState<ConsentMap | null>(null);
+  const [saving, setSaving] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/consent")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => { if (data?.consents) setConsents(data.consents); })
+      .catch(() => {});
+  }, []);
+
+  async function toggle(key: string, currentGranted: boolean) {
+    setSaving(key);
+    try {
+      const res = await fetch("/api/consent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          consents: [{ consentType: key, granted: !currentGranted, source: "settings" }],
+        }),
+      });
+      if (res.ok) {
+        setConsents((prev) => ({
+          ...prev,
+          [key]: { granted: !currentGranted, updatedAt: new Date().toISOString(), version: "1.0" },
+        }));
+      }
+    } finally {
+      setSaving(null);
+    }
+  }
+
+  return (
+    <Card>
+      <CardTitle>Privacy &amp; Marketing</CardTitle>
+      <p className="mt-1 text-xs text-foreground-muted">
+        Manage how Dueviq may contact you and use your data. Changes apply immediately.
+      </p>
+      <div className="mt-3 divide-y divide-border">
+        {MARKETING_CONSENT_TYPES.map(({ key, label, description }) => {
+          const entry = consents?.[key];
+          const granted = entry?.granted ?? false;
+          const isSaving = saving === key;
+          return (
+            <div key={key} className="flex items-center justify-between gap-4 py-3">
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-foreground">{label}</p>
+                <p className="text-xs text-foreground-muted">{description}</p>
+                {entry?.updatedAt && (
+                  <p className="text-[10px] text-foreground-muted mt-0.5">
+                    Last changed: {new Date(entry.updatedAt).toLocaleDateString()}
+                  </p>
+                )}
+              </div>
+              <button
+                role="switch"
+                aria-checked={granted}
+                aria-label={`Toggle ${label}`}
+                disabled={isSaving || consents === null}
+                onClick={() => toggle(key, granted)}
+                className={[
+                  "relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-info",
+                  "disabled:opacity-50 disabled:cursor-not-allowed",
+                  granted ? "bg-accent" : "bg-surface-muted",
+                ].join(" ")}
+              >
+                <span
+                  className={[
+                    "pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform transition-transform duration-200",
+                    granted ? "translate-x-5" : "translate-x-0",
+                  ].join(" ")}
+                />
+              </button>
+            </div>
+          );
+        })}
+      </div>
+      <p className="mt-3 text-[11px] text-foreground-muted">
+        Required consents (Privacy Policy &amp; Terms of Service) cannot be withdrawn here. To withdraw, contact us at privacy@dueviq.com.
+      </p>
+    </Card>
   );
 }

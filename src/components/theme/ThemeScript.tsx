@@ -1,3 +1,5 @@
+import Script from "next/script";
+
 export function ThemeScript() {
   const code = `(() => {
     try {
@@ -7,5 +9,5 @@ export function ThemeScript() {
       if (isDark) document.documentElement.classList.add('dark');
     } catch (e) {}
   })();`;
-  return <script dangerouslySetInnerHTML={{ __html: code }} />;
+  return <Script id="theme-init" strategy="afterInteractive" dangerouslySetInnerHTML={{ __html: code }} />;
 }

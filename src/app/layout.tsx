@@ -4,7 +4,7 @@ import "./globals.css";
 import { ThemeScript } from "@/components/theme/ThemeScript";
 import { Providers } from "@/components/Providers";
 import { ServiceWorkerRegistrar } from "@/components/ServiceWorkerRegistrar";
-import { ConsentBanner } from "@/components/ConsentBanner";
+import { ConsentModal } from "@/components/ConsentModal";
 import { PWAInstallBanner } from "@/components/PWAInstallBanner";
 
 const geistSans = Geist({
@@ -47,7 +47,7 @@ export default function RootLayout({
         <ServiceWorkerRegistrar />
         <Providers>{children}</Providers>
         <PWAInstallBanner />
-        <ConsentBanner />
+        <ConsentModal />
       </body>
     </html>
   );

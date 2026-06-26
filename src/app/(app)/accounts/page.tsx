@@ -63,12 +63,32 @@ export default function AccountsPage() {
   const { open: openPlaid, ready: plaidReady } = usePlaidLink({
     token: plaidToken ?? "",
     onSuccess: async (public_token: string) => {
+      setPlaidStatus("loading");
+      let succeeded = false;
       try {
-        await fetch("/api/plaid/exchange-token", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ public_token }) });
+        const res = await fetch("/api/plaid/exchange-token", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ public_token }),
+        });
+        const data = await res.json() as { accounts_imported?: number; error?: string };
+        if (!res.ok || data.error) {
+          console.error("[plaid] exchange-token error:", data.error);
+          setPlaidStatus("error");
+          return;
+        }
+        succeeded = true;
+        // Reload the accounts list so newly-linked accounts show up immediately
         await reloadFinancialAccounts();
-      } catch { /* ignore */ }
-      setPlaidToken(null);
-      setPlaidStatus("idle");
+        setSyncMsg(`${data.accounts_imported ?? 0} account${(data.accounts_imported ?? 0) !== 1 ? "s" : ""} linked successfully.`);
+        setTimeout(() => setSyncMsg(null), 5000);
+      } catch (err) {
+        console.error("[plaid] onSuccess handler:", err);
+        setPlaidStatus("error");
+      } finally {
+        setPlaidToken(null);
+        if (succeeded) setPlaidStatus("idle");
+      }
     },
     onExit: () => { setPlaidToken(null); setPlaidStatus("idle"); },
   });

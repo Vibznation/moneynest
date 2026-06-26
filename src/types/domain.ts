@@ -1,5 +1,28 @@
 export type IncomeFrequency = "weekly" | "biweekly" | "monthly" | "custom";
 
+export type Gender = "male" | "female" | "non_binary" | "prefer_not_to_say" | "other";
+
+export type AnnualIncomeRange =
+  | "under_25k"
+  | "25k_50k"
+  | "50k_75k"
+  | "75k_100k"
+  | "100k_150k"
+  | "over_150k"
+  | "prefer_not_to_say";
+
+export type ConsentType =
+  | "privacy_policy"
+  | "terms_of_service"
+  | "email_marketing"
+  | "sms_marketing"
+  | "analytics"
+  | "personalization";
+
+export type ConsentSource = "onboarding" | "settings" | "banner" | "api";
+
+export type ConsentAction = "granted" | "withdrawn" | "updated";
+
 export type BillCategory =
   | "Rent/Mortgage"
   | "Car"
@@ -37,8 +60,34 @@ export interface Profile {
   id: string;
   email: string | null;
   name: string | null;
+  // Extended marketing profile fields
+  phone: string | null;
+  phone_country_code: string | null;
+  date_of_birth: string | null; // ISO date
+  city: string | null;
+  state: string | null;
+  country: string | null;
+  zip: string | null;
+  gender: Gender | null;
+  occupation: string | null;
+  annual_income_range: AnnualIncomeRange | null;
+  marketing_source: string | null;
   onboarding_complete: boolean;
   created_at: string;
+}
+
+export interface UserConsent {
+  id: string;
+  user_id: string;
+  consent_type: ConsentType;
+  granted: boolean;
+  consent_version: string;
+  consent_text_shown: string;
+  consent_source: ConsentSource;
+  ip_address: string | null;
+  user_agent: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Income {

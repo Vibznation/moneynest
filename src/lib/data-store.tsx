@@ -103,7 +103,24 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
               }
               setSnapshot((s) => ({
                 ...s,
-                profile: profileRes.data ?? { id: realUid, email: realEmail, name: null, onboarding_complete: false, created_at: new Date().toISOString() },
+                profile: profileRes.data ?? {
+                  id: realUid,
+                  email: realEmail,
+                  name: null,
+                  phone: null,
+                  phone_country_code: "+1",
+                  date_of_birth: null,
+                  city: null,
+                  state: null,
+                  country: "US",
+                  zip: null,
+                  gender: null,
+                  occupation: null,
+                  annual_income_range: null,
+                  marketing_source: null,
+                  onboarding_complete: false,
+                  created_at: new Date().toISOString(),
+                },
                 account: accountRes.data ?? s.account,
                 settings: settingsRes.data ?? s.settings,
                 income: Array.isArray(income) ? income : s.income,
@@ -604,14 +621,24 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       reloadFinancialAccounts: async () => {
         if (!isCloudUser) return;
         const supabase = getSupabaseBrowser();
-        const { data } = await supabase
-          .from("financial_accounts")
-          .select("*")
-          .eq("user_id", userId)
-          .order("created_at", { ascending: true });
-        if (Array.isArray(data)) {
-          setSnapshot((s) => ({ ...s, financial_accounts: data }));
-        }
+        const [accountsRes, txRes] = await Promise.all([
+          supabase
+            .from("financial_accounts")
+            .select("*")
+            .eq("user_id", userId)
+            .order("created_at", { ascending: true }),
+          supabase
+            .from("transactions")
+            .select("*")
+            .eq("user_id", userId)
+            .order("transaction_date", { ascending: false })
+            .limit(200),
+        ]);
+        setSnapshot((s) => ({
+          ...s,
+          ...(Array.isArray(accountsRes.data) ? { financial_accounts: accountsRes.data } : {}),
+          ...(Array.isArray(txRes.data) ? { transactions: txRes.data } : {}),
+        }));
       },
     }),
     [snapshot, ready, mode, notice, dismissNotice, reset, userId, isCloudUser, runCloudMutation],

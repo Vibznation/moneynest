@@ -30,15 +30,20 @@ export async function POST(req: Request) {
     const now = new Date().toISOString();
 
     // Update each account's balance
-    await Promise.all(
-      balances.map((b) =>
+    await Promise.all([
+      ...balances.map((b) =>
         supabase
           .from("financial_accounts")
           .update({ balance: b.balance, last_synced_at: now, updated_at: now })
           .eq("plaid_account_id", b.plaid_account_id)
           .eq("user_id", user.id),
       ),
-    );
+      supabase
+        .from("plaid_items")
+        .update({ updated_at: now })
+        .eq("id", plaid_item_id)
+        .eq("user_id", user.id),
+    ]);
 
     return NextResponse.json({ updated: balances.length, balances });
   } catch (err) {

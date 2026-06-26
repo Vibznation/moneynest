@@ -11,11 +11,16 @@ import { Field, Input, Select } from "@/components/ui/Input";
 import {
   BILL_CATEGORIES,
   FREQUENCIES,
+  GENDER_OPTIONS,
   GOAL_CATEGORIES,
+  INCOME_RANGE_OPTIONS,
+  MARKETING_SOURCE_OPTIONS,
   SUBSCRIPTION_CATEGORIES,
 } from "@/lib/constants";
 import type {
+  AnnualIncomeRange,
   BillCategory,
+  Gender,
   GoalCategory,
   IncomeFrequency,
   SubscriptionCategory,
@@ -30,6 +35,7 @@ const STEPS = [
   "subscriptions",
   "goal",
   "bank",
+  "profile",
   "done",
 ] as const;
 
@@ -167,6 +173,10 @@ export default function OnboardingPage() {
         )}
 
         {step === "bank" && <BankStep onNext={next} onSkip={skip} />}
+
+        {step === "profile" && (
+          <ProfileStep onNext={next} onSkip={skip} updateProfile={updateProfile} />
+        )}
 
         {step === "done" && (
           <Card className="text-center">
@@ -696,6 +706,124 @@ function BankStep({
           Connect bank
         </Button>
       </div>
+    </Card>
+  );
+}
+
+function ProfileStep({
+  onNext,
+  onSkip,
+  updateProfile,
+}: {
+  onNext: () => void;
+  onSkip: () => void;
+  updateProfile: ReturnType<typeof useData>["updateProfile"];
+}) {
+  const [city, setCity] = useState("");
+  const [state, setState] = useState("");
+  const [gender, setGender] = useState<Gender | "">("");
+  const [dob, setDob] = useState("");
+  const [occupation, setOccupation] = useState("");
+  const [incomeRange, setIncomeRange] = useState<AnnualIncomeRange | "">("");
+  const [marketingSource, setMarketingSource] = useState("");
+
+  function save(andContinue: boolean) {
+    updateProfile({
+      ...(city ? { city } : {}),
+      ...(state ? { state } : {}),
+      ...(gender ? { gender: gender as Gender } : {}),
+      ...(dob ? { date_of_birth: dob } : {}),
+      ...(occupation ? { occupation } : {}),
+      ...(incomeRange ? { annual_income_range: incomeRange as AnnualIncomeRange } : {}),
+      ...(marketingSource ? { marketing_source: marketingSource } : {}),
+    });
+    if (andContinue) onNext();
+  }
+
+  return (
+    <Card>
+      <StepHeader
+        title="A little about you"
+        subtitle="Completely optional — helps us personalise your experience. You can update these anytime in Settings."
+      />
+      <form
+        className="grid gap-3 sm:grid-cols-2"
+        onSubmit={(e) => {
+          e.preventDefault();
+          save(true);
+        }}
+      >
+        <Field label="City (optional)">
+          <Input
+            value={city}
+            onChange={(e) => setCity(e.target.value)}
+            placeholder="e.g. Austin"
+          />
+        </Field>
+        <Field label="State (optional)">
+          <Input
+            value={state}
+            onChange={(e) => setState(e.target.value)}
+            placeholder="e.g. TX"
+          />
+        </Field>
+        <Field label="Date of birth (optional)">
+          <Input type="date" value={dob} onChange={(e) => setDob(e.target.value)} />
+        </Field>
+        <Field label="Gender (optional)">
+          <Select value={gender} onChange={(e) => setGender(e.target.value as Gender | "")}>
+            <option value="">Prefer not to say</option>
+            {GENDER_OPTIONS.map((g) => (
+              <option key={g.value} value={g.value}>
+                {g.label}
+              </option>
+            ))}
+          </Select>
+        </Field>
+        <Field label="Occupation (optional)">
+          <Input
+            value={occupation}
+            onChange={(e) => setOccupation(e.target.value)}
+            placeholder="e.g. Software engineer"
+          />
+        </Field>
+        <Field label="Annual household income (optional)">
+          <Select
+            value={incomeRange}
+            onChange={(e) => setIncomeRange(e.target.value as AnnualIncomeRange | "")}
+          >
+            <option value="">Prefer not to say</option>
+            {INCOME_RANGE_OPTIONS.map((r) => (
+              <option key={r.value} value={r.value}>
+                {r.label}
+              </option>
+            ))}
+          </Select>
+        </Field>
+        <div className="sm:col-span-2">
+          <Field label="How did you hear about Dueviq? (optional)">
+            <Select
+              value={marketingSource}
+              onChange={(e) => setMarketingSource(e.target.value)}
+            >
+              <option value="">Select…</option>
+              {MARKETING_SOURCE_OPTIONS.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </Select>
+          </Field>
+        </div>
+        <div className="sm:col-span-2 flex justify-between mt-2">
+          <Button type="button" variant="ghost" onClick={onSkip}>
+            Skip
+          </Button>
+          <Button type="submit">
+            Continue <ArrowRight size={16} />
+          </Button>
+        </div>
+      </form>
     </Card>
   );
 }
