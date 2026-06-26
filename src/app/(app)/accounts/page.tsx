@@ -58,6 +58,23 @@ export default function AccountsPage() {
   const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState<string | null>(null);
 
+  const { open: openPlaid, ready: plaidReady } = usePlaidLink({
+    token: plaidToken ?? "",
+    onSuccess: async (public_token: string) => {
+      try {
+        await fetch("/api/plaid/exchange-token", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ public_token }) });
+        await reloadFinancialAccounts();
+      } catch { /* ignore */ }
+      setPlaidToken(null);
+      setPlaidStatus("idle");
+    },
+    onExit: () => { setPlaidToken(null); setPlaidStatus("idle"); },
+  });
+
+  useEffect(() => {
+    if (plaidToken && plaidReady) openPlaid();
+  }, [plaidToken, plaidReady, openPlaid]);
+
   const connectedItemIds = useMemo(
     () => [
       ...new Set(
@@ -174,28 +191,13 @@ export default function AccountsPage() {
               Automatically sync balances and transactions via Plaid.
             </p>
           </div>
-          {plaidToken ? (
-            <PlaidLinkLauncher
-              token={plaidToken}
-              onSuccess={async (public_token: string) => {
-                try {
-                  await fetch("/api/plaid/exchange-token", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ public_token }) });
-                  await reloadFinancialAccounts();
-                } catch { /* ignore */ }
-                setPlaidToken(null);
-                setPlaidStatus("idle");
-              }}
-              onExit={() => { setPlaidToken(null); setPlaidStatus("idle"); }}
-            />
-          ) : (
-            <Button
+          <Button
               variant="secondary"
               disabled={plaidStatus === "loading"}
               onClick={fetchPlaidToken}
             >
               <Landmark size={16} /> {plaidStatus === "loading" ? "Connecting…" : plaidStatus === "error" ? "Retry" : "Connect"}
             </Button>
-          )}
         </Card>
       </div>
 
@@ -609,16 +611,4 @@ function AccountModal({
 }
 
 // Mounted only when we have a valid token — prevents Plaid script from loading multiple times
-function PlaidLinkLauncher({
-  token,
-  onSuccess,
-  onExit,
-}: {
-  token: string;
-  onSuccess: (public_token: string) => void;
-  onExit: () => void;
-}) {
-  const { open, ready } = usePlaidLink({ token, onSuccess, onExit });
-  useEffect(() => { if (ready) open(); }, [ready, open]);
-  return null;
-}
+

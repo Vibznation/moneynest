@@ -43,7 +43,7 @@ export default function RootLayout({
 
         <link rel="apple-touch-icon" href="/icon-512.png" />
       </head>
-      <body className="min-h-full flex flex-col bg-background text-foreground">
+      <body className="min-h-full flex flex-col bg-background text-foreground" suppressHydrationWarning>
         <ServiceWorkerRegistrar />
         <Providers>{children}</Providers>
         <PWAInstallBanner />
